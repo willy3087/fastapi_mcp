@@ -3,6 +3,7 @@ Discovery module for finding FastAPI endpoints.
 """
 
 import inspect
+import sys
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type, get_type_hints, Union
 
 import fastapi
@@ -14,6 +15,9 @@ try:
 except ImportError:
     # Pydantic v1 fallback
     from pydantic import BaseModel
+
+# Check if Python version supports PEP 604 (|) union types
+PY310_OR_HIGHER = sys.version_info >= (3, 10)
 
 
 class Endpoint:
@@ -215,6 +219,18 @@ def parse_endpoint_params(route: APIRoute) -> Tuple[Dict[str, Any], Dict[str, An
         else:
             # Simplify the annotation if it's a complex type
             simplified_annotation = annotation
+            
+            # Handle PEP 604 union types (X | Y) in Python 3.10+
+            if PY310_OR_HIGHER:
+                if (hasattr(annotation, "__or__") or 
+                    (hasattr(annotation, "__origin__") and str(annotation.__origin__) == "types.UnionType")):
+                    args = getattr(annotation, "__args__", [])
+                    for arg in args:
+                        if arg is not type(None):  # noqa
+                            simplified_annotation = arg
+                            break
+            
+            # Handle traditional Union types
             if hasattr(annotation, "__origin__") and annotation.__origin__ is Union:
                 for arg in getattr(annotation, "__args__", []):
                     if arg is not type(None):  # noqa

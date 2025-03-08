@@ -4,6 +4,7 @@ Generator module for creating MCP servers from FastAPI applications.
 
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Union, Any, Type, get_type_hints, get_origin, get_args
 
@@ -18,6 +19,9 @@ except ImportError:
 
 from fastapi_mcp.converter import convert_endpoint_to_mcp_tool
 from fastapi_mcp.discovery import Endpoint
+
+# Check if Python version supports PEP 604 (|) union types
+PY310_OR_HIGHER = sys.version_info >= (3, 10)
 
 
 def generate_mcp_server(
@@ -172,33 +176,27 @@ def generate_server_code(
             fields = get_model_fields(model_class)
             for field_name, field_info in fields.items():
                 # Get type name
-                if hasattr(field_info["type"], "__origin__") and field_info["type"].__origin__ is Union:
-                    args = field_info["type"].__args__
-                    if len(args) == 2 and args[1] is type(None):
-                        type_name = _get_simple_type_name(args[0])
+                type_name = _get_simple_type_name(field_info["type"])
+                
+                # Check if the field is optional
+                is_optional = field_info.get("optional", False)
+                
+                # Check if the field has a default value
+                if field_info["default"] is None and field_info["required"]:
+                    # Required field with no default value - use Undefined
+                    model_lines.append(f"    {field_name}: {type_name} = Undefined")
+                elif field_info["default"] is None and not field_info["required"]:
+                    # Optional field with None default
+                    if is_optional:
                         model_lines.append(f"    {field_name}: Optional[{type_name}] = None")
                     else:
-                        type_name = _get_simple_type_name(field_info["type"])
-                        model_lines.append(f"    {field_name}: {type_name}")
+                        model_lines.append(f"    {field_name}: {type_name} = None")
+                elif isinstance(field_info["default"], str):
+                    # String default value
+                    model_lines.append(f'    {field_name}: {type_name} = "{field_info["default"]}"')
                 else:
-                    type_name = _get_simple_type_name(field_info["type"])
-                    
-                    # Check if the field has a default value
-                    if field_info["default"] is None and field_info["required"]:
-                        # Required field with no default value - use Undefined
-                        model_lines.append(f"    {field_name}: {type_name} = Undefined")
-                    elif field_info["default"] is None and not field_info["required"]:
-                        # Optional field with None default
-                        if type_name.startswith("Optional["):
-                            model_lines.append(f"    {field_name}: {type_name} = None")
-                        else:
-                            model_lines.append(f"    {field_name}: Optional[{type_name}] = None")
-                    elif isinstance(field_info["default"], str):
-                        # String default value
-                        model_lines.append(f'    {field_name}: {type_name} = "{field_info["default"]}"')
-                    else:
-                        # Other default value
-                        model_lines.append(f"    {field_name}: {type_name} = {field_info['default']}")
+                    # Other default value
+                    model_lines.append(f"    {field_name}: {type_name} = {field_info['default']}")
             
             # Add the model definition
             server_code.extend(model_lines)
@@ -469,31 +467,75 @@ def _get_simple_type_name(type_annotation):
     Returns:
         A string representation of the type.
     """
+    # Handle primitive types directly
+    if type_annotation is str:
+        return "str"
+    elif type_annotation is int:
+        return "int"
+    elif type_annotation is float:
+        return "float"
+    elif type_annotation is bool:
+        return "bool"
+    elif type_annotation is list:
+        return "List"
+    elif type_annotation is dict:
+        return "Dict"
+    elif type_annotation is Any:
+        return "Any"
+    
+    # Handle PEP 604 union types (X | Y) in Python 3.10+
+    if PY310_OR_HIGHER:
+        if (hasattr(type_annotation, "__or__") or 
+            (hasattr(type_annotation, "__origin__") and str(type_annotation.__origin__) == "types.UnionType")):
+            args = getattr(type_annotation, "__args__", [])
+            
+            # Check if this is equivalent to Optional[T]
+            if any(arg is type(None) for arg in args):
+                # Get the non-None type
+                non_none_args = [arg for arg in args if arg is not type(None)]
+                if len(non_none_args) == 1:
+                    return f"Optional[{_get_simple_type_name(non_none_args[0])}]"
+            
+            # Regular Union
+            arg_strs = [_get_simple_type_name(arg) for arg in args]
+            return f"Union[{', '.join(arg_strs)}]"
+    
     if hasattr(type_annotation, "__origin__"):
         # Handle generics like List, Dict, etc.
         origin = get_origin(type_annotation)
         args = get_args(type_annotation)
         
-        if origin is list or origin is List:
+        if origin is list or str(origin).endswith("list"):
             if args:
                 return f"List[{_get_simple_type_name(args[0])}]"
             return "List"
-        elif origin is dict or origin is Dict:
+        elif origin is dict or str(origin).endswith("dict"):
             if len(args) == 2:
                 return f"Dict[{_get_simple_type_name(args[0])}, {_get_simple_type_name(args[1])}]"
             return "Dict"
-        elif origin is Union:
+        elif origin is Union or str(origin).endswith("Union"):
+            # Check if this is equivalent to Optional[T]
+            if len(args) == 2 and args[1] is type(None):  # noqa
+                return f"Optional[{_get_simple_type_name(args[0])}]"
+                
+            # Regular Union
             arg_strs = [_get_simple_type_name(arg) for arg in args]
             return f"Union[{', '.join(arg_strs)}]"
         else:
             # Other generic types
-            return str(type_annotation).replace("typing.", "")
+            try:
+                return str(type_annotation).replace("typing.", "")
+            except:
+                return "Any"
     elif hasattr(type_annotation, "__name__"):
         # Regular classes
         return type_annotation.__name__
     else:
         # Fallback
-        return str(type_annotation).replace("typing.", "")
+        try:
+            return str(type_annotation).replace("typing.", "")
+        except:
+            return "Any"
 
 
 def get_model_fields(model_class):
@@ -531,19 +573,40 @@ def get_model_fields(model_class):
                 except:
                     pass
         
-        # Check for Optional type
+        # Check for Optional type (PEP 604 union types)
         is_optional = False
+        clean_type = field_type  # Store the cleaned type
+        
+        # Handle PEP 604 union types (X | Y) in Python 3.10+
+        if PY310_OR_HIGHER:
+            if (hasattr(field_type, "__or__") or 
+                (hasattr(field_type, "__origin__") and str(field_type.__origin__) == "types.UnionType")):
+                args = getattr(field_type, "__args__", [])
+                if any(arg is type(None) for arg in args):
+                    is_optional = True
+                    required = False
+                    # Extract the non-None type
+                    non_none_args = [arg for arg in args if arg is not type(None)]
+                    if len(non_none_args) == 1:
+                        clean_type = non_none_args[0]
+        
+        # Check for traditional Union with None type
         if hasattr(field_type, "__origin__") and field_type.__origin__ is Union:
             args = field_type.__args__
-            if len(args) == 2 and args[1] is type(None):
+            if any(arg is type(None) for arg in args):
                 is_optional = True
                 required = False
+                # Extract the non-None type
+                non_none_args = [arg for arg in args if arg is not type(None)]
+                if len(non_none_args) == 1:
+                    clean_type = non_none_args[0]
         
         # Add the field info
         fields[field_name] = {
-            "type": field_type,
+            "type": clean_type,
             "required": required and not is_optional,
-            "default": default
+            "default": default,
+            "optional": is_optional
         }
     
     return fields 

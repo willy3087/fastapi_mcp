@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="fastapi-mcp",
-    version="0.1.0",
+    version="0.1.1",
     description="Automatic MCP server generator for FastAPI applications - converts FastAPI endpoints to MCP tools for LLM integration",
     author="Tadata Inc.",
     author_email="itay@tadata.com",

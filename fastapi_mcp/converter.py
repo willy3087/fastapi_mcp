@@ -3,6 +3,7 @@ Converter module for converting FastAPI endpoints to MCP tools.
 """
 
 import inspect
+import sys
 from typing import Any, Callable, Dict, List, Optional, Type, Union, get_type_hints
 
 from fastapi import FastAPI
@@ -17,6 +18,9 @@ except ImportError:
     from pydantic.fields import FieldInfo
 
 from fastapi_mcp.discovery import Endpoint
+
+# Check if Python version supports PEP 604 (|) union types
+PY310_OR_HIGHER = sys.version_info >= (3, 10)
 
 
 def convert_endpoint_to_mcp_tool(endpoint: Endpoint) -> Dict[str, Any]:
@@ -219,6 +223,20 @@ def _convert_type_annotation(annotation: Any) -> str:
         return "dict"
     elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
         return "dict"
+    
+    # Handle PEP 604 union types (X | Y) in Python 3.10+
+    if PY310_OR_HIGHER:
+        # Check if the annotation has the __or__ method, indicating it's a type that can be used with |
+        # or if it has the __origin__ attribute that matches types.UnionType
+        if (hasattr(annotation, "__or__") or 
+            (hasattr(annotation, "__origin__") and str(annotation.__origin__) == "types.UnionType")):
+            # Get the args of the union
+            args = getattr(annotation, "__args__", [])
+            # Filter out NoneType to handle Optional types
+            for arg in args:
+                if arg is not type(None):  # noqa
+                    return _convert_type_annotation(arg)
+            return "Any"
     
     # Try to handle Union types
     if hasattr(annotation, "__origin__") and annotation.__origin__ is Union:
