@@ -21,7 +21,7 @@ You can also install FastAPI-MCP from source:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/fastapi-mcp.git
+git clone https://github.com/tadata-org/fastapi_mcp.git
 cd fastapi-mcp
 
 # Install the package

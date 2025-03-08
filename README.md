@@ -183,8 +183,12 @@ For more examples, see the [examples](examples) directory.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a pull request.
+Contributions are welcome! Please feel free to submit a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
 
 ## License
 
-MIT
+MIT License. Copyright (c) 2024 Tadata Inc.
+
+## About
+
+Developed and maintained by [Tadata Inc.](https://github.com/tadata-org)

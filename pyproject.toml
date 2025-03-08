@@ -5,12 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "fastapi-mcp"
 version = "0.1.0"
-description = "Automatic MCP server generator for FastAPI applications"
+description = "Automatic MCP server generator for FastAPI applications - converts FastAPI endpoints to MCP tools for LLM integration"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {file = "LICENSE"}
 authors = [
-    {name = "FastAPI MCP Team", email = "contact@example.com"},
+    {name = "Tadata Inc.", email = "itay@tadata.com"},
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -20,7 +20,11 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP",
+    "Framework :: FastAPI",
 ]
+keywords = ["fastapi", "mcp", "llm", "claude", "ai", "tools", "api", "conversion"]
 dependencies = [
     "fastapi>=0.100.0",
     "typer>=0.9.0",
@@ -28,7 +32,14 @@ dependencies = [
     "mcp>=1.3.0",
     "pydantic>=2.0.0",
     "uvicorn>=0.20.0",
+    "requests>=2.25.0",
+    "inspect-mate>=0.0.2",
 ]
+
+[project.urls]
+Homepage = "https://github.com/tadata-org/fastapi_mcp"
+Documentation = "https://github.com/tadata-org/fastapi_mcp#readme"
+"Bug Tracker" = "https://github.com/tadata-org/fastapi_mcp/issues"
 
 [project.optional-dependencies]
 dev = [
