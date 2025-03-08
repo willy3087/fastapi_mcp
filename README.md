@@ -2,6 +2,9 @@
 
 A magical, zero-configuration tool for generating Model Context Protocol (MCP) servers from FastAPI applications.
 
+[![PyPI version](https://badge.fury.io/py/fastapi-mcp.svg)](https://pypi.org/project/fastapi-mcp/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/fastapi-mcp.svg)](https://pypi.org/project/fastapi-mcp/)
+
 ## Features
 
 - **Automatic discovery** of all FastAPI endpoints in your application
@@ -15,11 +18,13 @@ A magical, zero-configuration tool for generating Model Context Protocol (MCP) s
 
 ## Installation
 
+You can install FastAPI-MCP directly from [PyPI](https://pypi.org/project/fastapi-mcp/):
+
 ```bash
 pip install fastapi-mcp
 ```
 
-For detailed installation instructions, see [INSTALL.md](INSTALL.md).
+For detailed installation instructions and alternative methods, see [INSTALL.md](INSTALL.md).
 
 ## Usage
 

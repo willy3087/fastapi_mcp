@@ -36,4 +36,12 @@ setup(
         "Framework :: FastAPI",
     ],
     keywords=["fastapi", "mcp", "llm", "claude", "ai", "tools", "api", "conversion"],
+    project_urls={
+        "Homepage": "https://github.com/tadata-org/fastapi_mcp",
+        "Documentation": "https://github.com/tadata-org/fastapi_mcp#readme",
+        "Bug Tracker": "https://github.com/tadata-org/fastapi_mcp/issues",
+        "PyPI": "https://pypi.org/project/fastapi-mcp/",
+        "Source Code": "https://github.com/tadata-org/fastapi_mcp",
+        "Changelog": "https://github.com/tadata-org/fastapi_mcp/blob/main/CHANGELOG.md",
+    },
 ) 

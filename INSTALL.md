@@ -7,17 +7,19 @@ This guide will help you install and set up FastAPI-MCP on your system.
 - Python 3.10 or higher
 - pip (Python package installer)
 
-## Installation from PyPI
+## Installation from PyPI (Recommended)
 
-The simplest way to install FastAPI-MCP is directly from PyPI:
+The recommended way to install FastAPI-MCP is directly from [PyPI](https://pypi.org/project/fastapi-mcp/):
 
 ```bash
 pip install fastapi-mcp
 ```
 
+This will install the latest stable version of FastAPI-MCP along with all its dependencies.
+
 ## Installation from Source
 
-You can also install FastAPI-MCP from source:
+If you need the latest development version or want to contribute to the project, you can install FastAPI-MCP from source:
 
 ```bash
 # Clone the repository
