@@ -16,7 +16,13 @@ A zero-configuration tool for integrating Model Context Protocol (MCP) servers w
 
 ## Installation
 
-You can install FastAPI-MCP directly from [PyPI](https://pypi.org/project/fastapi-mcp/):
+We recommend using [uv](https://docs.astral.sh/uv/), a fast Python package installer:
+
+```bash
+uv add fastapi-mcp
+```
+
+Alternatively, you can install with pip:
 
 ```bash
 pip install fastapi-mcp
@@ -24,9 +30,7 @@ pip install fastapi-mcp
 
 For detailed installation instructions and alternative methods, see [INSTALL.md](INSTALL.md).
 
-## Usage
-
-### Direct integration (Recommended)
+## Basic Usage
 
 The simplest way to use FastAPI-MCP is to add an MCP server directly to your FastAPI application:
 
@@ -34,67 +38,50 @@ The simplest way to use FastAPI-MCP is to add an MCP server directly to your Fas
 from fastapi import FastAPI
 from fastapi_mcp import add_mcp_server
 
-# Create your FastAPI app
+# Your FastAPI app
 app = FastAPI()
 
-# Define your endpoints...
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str = None):
-    """Get details for a specific item"""
-    return {"item_id": item_id, "q": q}
-
-# Add an MCP server to your app
-mcp_server = add_mcp_server(
+# Mount the MCP server to your app
+add_mcp_server(
     app,                    # Your FastAPI app
     mount_path="/mcp",      # Where to mount the MCP server
     name="My API MCP",      # Name for the MCP server
-    base_url="http://localhost:8000"  # Base URL for API requests
+)
+```
+
+That's it! Your auto-generated MCP server is now available at `https://app.base.url/mcp`.
+
+## Advanced Usage
+
+FastAPI-MCP provides several ways to customize and control how your MCP server is created and configured. Here are some advanced usage patterns:
+
+```python
+from fastapi import FastAPI
+from fastapi_mcp import add_mcp_server
+
+app = FastAPI()
+
+mcp_server = add_mcp_server(
+    app,                                    # Your FastAPI app
+    mount_path="/mcp",                      # Where to mount the MCP server
+    name="My API MCP",                      # Name for the MCP server
+    describe_all_responses=True,            # False by default. Include all possible response schemas in tool descriptions, instead of just the successful response.
+    describe_full_response_schema=True      # False by default. Include full JSON schema in tool descriptions, instead of just an LLM-friendly response example.
 )
 
-# Optionally add custom MCP tools
+# Add custom tools in addition to existing APIs.
 @mcp_server.tool()
-async def get_item_count() -> int:
-    """Get the total number of items in the database."""
-    return 42  # Your custom implementation
+async def get_server_time() -> str:
+    """Get the current server time."""
+    from datetime import datetime
+    return datetime.now().isoformat()
 ```
-
-Your FastAPI app will now have an MCP server mounted at the specified path, with all your API endpoints available as MCP tools.
-
-### Legacy CLI Usage
-
-The CLI is still available for backward compatibility:
-
-```bash
-# Generate an MCP server from a FastAPI app
-fastapi-mcp generate app.py
-
-# Preview the generated server
-fastapi-mcp preview
-
-# Run the generated server
-fastapi-mcp run
-
-# Install the server for Claude
-fastapi-mcp install
-```
-
-## How It Works
-
-FastAPI-MCP:
-
-1. Takes your FastAPI application
-2. Creates an MCP server instance
-3. Mounts the MCP server to your FastAPI app
-4. Extracts endpoint information from your OpenAPI schema
-5. Creates MCP tools that make HTTP requests to your API endpoints
-6. Preserves documentation and type information
-7. Registers the tools with the MCP server
 
 ## Examples
 
 See the [examples](examples) directory for complete examples.
 
-### Simple direct integration example:
+### Simple integration example:
 
 ```python
 from fastapi import FastAPI
@@ -130,49 +117,30 @@ Once your FastAPI app with MCP integration is running, you can connect to it wit
 2. In Claude, use the URL of your MCP server endpoint (e.g., `http://localhost:8000/mcp`)
 3. Claude will discover all available tools and resources automatically
 
-## Advanced Configuration
+## Development and Contributing
 
-FastAPI-MCP provides several options for advanced configuration:
+If you're interested in contributing to FastAPI-MCP:
 
-```python
-mcp_server = add_mcp_server(
-    app,
-    mount_path="/mcp",
-    name="My Custom MCP Server",
-    description="Custom description for the MCP server",
-    capabilities={"streaming": True},  # Set MCP capabilities
-    serve_tools=True,  # Whether to serve API endpoints as MCP tools
-    base_url="https://api.example.com"  # Base URL for API requests
-)
+```bash
+# Clone the repository
+git clone https://github.com/tadata-org/fastapi_mcp.git
+cd fastapi_mcp
+
+# Create a virtual environment and install dependencies with uv
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv add -e ".[dev]"
+
+# Run tests
+uv run pytest
 ```
 
-You can also create and mount an MCP server separately:
-
-```python
-from fastapi_mcp import create_mcp_server, mount_mcp_server
-
-# Create an MCP server
-mcp_server = create_mcp_server(app, name="My MCP Server")
-
-# Add custom tools
-@mcp_server.tool()
-async def custom_tool():
-    return "Custom tool result"
-
-# Mount the MCP server to the FastAPI app
-mount_mcp_server(app, mcp_server, mount_path="/mcp")
-```
+For more details about contributing, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Requirements
 
 - Python 3.10+
-- FastAPI 0.100.0+
-- Pydantic 2.0.0+
-- MCP 1.3.0+
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
+- uv
 
 ## License
 

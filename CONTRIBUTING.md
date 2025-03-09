@@ -2,46 +2,58 @@
 
 First off, thank you for considering contributing to FastAPI-MCP! 
 
+## Development Setup
+
+1. Make sure you have Python 3.10+ installed
+2. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (recommended) or pip
+3. Fork the repository
+4. Clone your fork and set up the development environment:
+
+```bash
+# Clone your fork
+git clone https://github.com/YOUR-USERNAME/fastapi_mcp.git
+cd fastapi-mcp
+
+# Create a virtual environment with uv (recommended)
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install development dependencies with uv
+uv add -e ".[dev]"
+
+# Alternatively, using pip
+# python -m venv venv
+# source venv/bin/activate  # On Windows: venv\Scripts\activate
+# pip install -e ".[dev]"
+```
+
 ## Development Process
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Run the tests (`pytest`)
-5. Format your code (`black .` and `isort .`)
-6. Commit your changes (`git commit -m 'Add some amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
-
-## Setting Up Development Environment
-
-```bash
-# Clone your fork
-git clone https://github.com/tadata-org/fastapi_mcp
-cd fastapi-mcp
-
-# Create a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install development dependencies
-pip install -e ".[dev]"
-```
+4. Run type checking (`uv run mypy .`)
+5. Run the tests (`uv run pytest`)
+6. Format your code (`uv run ruff check .` and `uv run ruff format .`)
+7. Commit your changes (`git commit -m 'Add some amazing feature'`)
+8. Push to the branch (`git push origin feature/amazing-feature`)
+9. Open a Pull Request
 
 ## Code Style
 
 We use the following tools to ensure code quality:
 
-- **Black** for code formatting
-- **isort** for import sorting
 - **ruff** for linting
 - **mypy** for type checking
 
 Please make sure your code passes all checks before submitting a pull request:
 
 ```bash
-black .
-isort .
+# Using uv
+uv run ruff check .
+uv run mypy .
+
+# Or directly if tools are installed
 ruff check .
 mypy .
 ```
@@ -51,8 +63,22 @@ mypy .
 We use pytest for testing. Please write tests for any new features and ensure all tests pass:
 
 ```bash
+# Using uv
+uv run pytest
+
+# Or directly
 pytest
 ```
+
+## Project Architecture
+
+FastAPI-MCP uses a direct integration approach to add MCP functionality to FastAPI applications:
+
+1. The `server.py` module handles creating and mounting MCP servers to FastAPI apps
+2. The `http_tools.py` module converts FastAPI endpoints to MCP tools
+3. All integration happens at runtime - there is no code generation involved
+
+When contributing, please keep this architecture in mind and ensure your changes maintain the seamless integration experience.
 
 ## Pull Request Process
 
