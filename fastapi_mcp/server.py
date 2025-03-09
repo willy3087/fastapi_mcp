@@ -4,7 +4,7 @@ Server module for FastAPI-MCP.
 This module provides functionality for creating and mounting MCP servers to FastAPI applications.
 """
 
-from typing import Dict, Optional, Union, Any
+from typing import Dict, Optional, Any
 
 from fastapi import FastAPI
 from mcp.server.fastmcp import FastMCP
@@ -53,6 +53,8 @@ def mount_mcp_server(
     mount_path: str = "/mcp",
     serve_tools: bool = True,
     base_url: Optional[str] = None,
+    describe_all_responses: bool = False,
+    describe_full_response_schema: bool = False,
 ) -> None:
     """
     Mount an MCP server to a FastAPI app.
@@ -63,6 +65,8 @@ def mount_mcp_server(
         mount_path: Path where the MCP server will be mounted
         serve_tools: Whether to serve tools from the FastAPI app
         base_url: Base URL for API requests
+        describe_all_responses: Whether to include all possible response schemas in tool descriptions. Recommended to keep False, as the LLM will probably derive if there is an error.
+        describe_full_response_schema: Whether to include full json schema for responses in tool descriptions. Recommended to keep False, as examples are more LLM friendly, and save tokens.
     """
     # Normalize mount path
     if not mount_path.startswith("/"):
@@ -88,7 +92,13 @@ def mount_mcp_server(
 
     # Serve tools from the FastAPI app if requested
     if serve_tools:
-        create_mcp_tools_from_openapi(app, mcp_server, base_url)
+        create_mcp_tools_from_openapi(
+            app,
+            mcp_server,
+            base_url,
+            describe_all_responses=describe_all_responses,
+            describe_full_response_schema=describe_full_response_schema,
+        )
 
 
 def add_mcp_server(
@@ -99,6 +109,8 @@ def add_mcp_server(
     capabilities: Optional[Dict[str, Any]] = None,
     serve_tools: bool = True,
     base_url: Optional[str] = None,
+    describe_all_responses: bool = False,
+    describe_full_response_schema: bool = False,
 ) -> FastMCP:
     """
     Add an MCP server to a FastAPI app.
@@ -111,6 +123,8 @@ def add_mcp_server(
         capabilities: Optional capabilities for the MCP server
         serve_tools: Whether to serve tools from the FastAPI app
         base_url: Base URL for API requests (defaults to http://localhost:$PORT)
+        describe_all_responses: Whether to include all possible response schemas in tool descriptions. Recommended to keep False, as the LLM will probably derive if there is an error.
+        describe_full_response_schema: Whether to include full json schema for responses in tool descriptions. Recommended to keep False, as examples are more LLM friendly, and save tokens.
 
     Returns:
         The FastMCP instance that was created and mounted
@@ -119,6 +133,14 @@ def add_mcp_server(
     mcp_server = create_mcp_server(app, name, description, capabilities)
 
     # Mount MCP server to FastAPI app
-    mount_mcp_server(app, mcp_server, mount_path, serve_tools, base_url)
+    mount_mcp_server(
+        app,
+        mcp_server,
+        mount_path,
+        serve_tools,
+        base_url,
+        describe_all_responses=describe_all_responses,
+        describe_full_response_schema=describe_full_response_schema,
+    )
 
     return mcp_server

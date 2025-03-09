@@ -8,7 +8,6 @@ import json
 import sys
 import asyncio
 import httpx
-from pprint import pprint
 from urllib.parse import urljoin
 
 # Default MCP server URL
@@ -125,7 +124,8 @@ async def test_mcp_tools(url=MCP_URL):
                     if tools:
                         print(f"\nFound {len(tools)} tools:")
                         for i, tool in enumerate(tools):
-                            print(f"{i + 1}. {tool['name']} - {tool.get('description', 'No description')}")
+                            print(f"{i + 1}. {tool['name']}")
+                            print(f"{tool.get('description', 'No description')}")
 
                         # 4. Find and call the get_item_count tool
                         get_item_count_tool = None

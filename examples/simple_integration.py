@@ -147,6 +147,8 @@ mcp_server = add_mcp_server(
     name="Item API MCP",
     description="MCP server for the Item API",
     base_url="http://localhost:8000",
+    describe_all_responses=False,  # Only describe the success response in tool descriptions
+    describe_full_response_schema=False,  # Only show LLM-friendly example response in tool descriptions, not the full json schema
 )
 
 

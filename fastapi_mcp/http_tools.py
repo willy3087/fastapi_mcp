@@ -4,16 +4,14 @@ HTTP tools for FastAPI-MCP.
 This module provides functionality for creating MCP tools from FastAPI endpoints.
 """
 
-import inspect
 import json
 import logging
-from typing import Any, Callable, Dict, List, Optional, Type, get_type_hints
+from typing import Any, Dict, List, Optional
 
 import httpx
-from fastapi import FastAPI, params
+from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from mcp.server.fastmcp import FastMCP
-from pydantic import BaseModel
 
 logger = logging.getLogger("fastapi_mcp")
 
@@ -101,7 +99,13 @@ def clean_schema_for_display(schema: Dict[str, Any]) -> Dict[str, Any]:
     return schema
 
 
-def create_mcp_tools_from_openapi(app: FastAPI, mcp_server: FastMCP, base_url: str = None) -> None:
+def create_mcp_tools_from_openapi(
+    app: FastAPI,
+    mcp_server: FastMCP,
+    base_url: Optional[str] = None,
+    describe_all_responses: bool = False,
+    describe_full_response_schema: bool = False,
+) -> None:
     """
     Create MCP tools from a FastAPI app's OpenAPI schema.
 
@@ -109,6 +113,8 @@ def create_mcp_tools_from_openapi(app: FastAPI, mcp_server: FastMCP, base_url: s
         app: The FastAPI application
         mcp_server: The MCP server to add tools to
         base_url: Base URL for API requests (defaults to http://localhost:$PORT)
+        describe_all_responses: Whether to include all possible response schemas in tool descriptions
+        describe_full_response_schema: Whether to include full response schema in tool descriptions
     """
     # Get OpenAPI schema from FastAPI app
     openapi_schema = get_openapi(
@@ -161,6 +167,8 @@ def create_mcp_tools_from_openapi(app: FastAPI, mcp_server: FastMCP, base_url: s
                 request_body=operation.get("requestBody", {}),
                 responses=operation.get("responses", {}),
                 openapi_schema=openapi_schema,
+                describe_all_responses=describe_all_responses,
+                describe_full_response_schema=describe_full_response_schema,
             )
 
 
@@ -176,6 +184,8 @@ def create_http_tool(
     request_body: Dict[str, Any],
     responses: Dict[str, Any],
     openapi_schema: Dict[str, Any],
+    describe_all_responses: bool,
+    describe_full_response_schema: bool,
 ) -> None:
     """
     Create an MCP tool that makes an HTTP request to a FastAPI endpoint.
@@ -192,6 +202,8 @@ def create_http_tool(
         request_body: OpenAPI request body
         responses: OpenAPI responses
         openapi_schema: The full OpenAPI schema
+        describe_all_responses: Whether to include all possible response schemas in tool descriptions
+        describe_full_response_schema: Whether to include full response schema in tool descriptions
     """
     # Build tool description
     tool_description = f"{summary}" if summary else f"{method.upper()} {path}"
@@ -210,8 +222,16 @@ def create_http_tool(
                 success_response = responses[str(status_code)]
                 break
 
-        # Process all responses
-        for status_code, response_data in responses.items():
+        # Get the list of responses to include
+        responses_to_include = responses
+        if not describe_all_responses and success_response:
+            # If we're not describing all responses, only include the success response
+            success_code = next((code for code in success_codes if str(code) in responses), None)
+            if success_code:
+                responses_to_include = {str(success_code): success_response}
+
+        # Process all selected responses
+        for status_code, response_data in responses_to_include.items():
             response_desc = response_data.get("description", "")
             response_info += f"\n**{status_code}**: {response_desc}"
 
@@ -310,30 +330,25 @@ def create_http_tool(
                                 response_info += json.dumps(generated_example, indent=2)
                                 response_info += "\n```"
 
-                        # Format schema information based on its type
-                        if display_schema.get("type") == "array" and "items" in display_schema:
-                            items_schema = display_schema["items"]
-                            # Check if items reference a model
-                            items_model_name = None
-                            if "$ref" in schema.get("items", {}):
-                                items_ref_path = schema["items"]["$ref"]
-                                if items_ref_path.startswith("#/components/schemas/"):
-                                    items_model_name = items_ref_path.split("/")[-1]
-                                    response_info += f"\nArray of: {items_model_name}"
+                        # Only include full schema information if requested
+                        if describe_full_response_schema:
+                            # Format schema information based on its type
+                            if display_schema.get("type") == "array" and "items" in display_schema:
+                                items_schema = display_schema["items"]
 
-                            response_info += (
-                                "\n\n**Output Schema:** Array of items with the following structure:\n```json\n"
-                            )
-                            response_info += json.dumps(items_schema, indent=2)
-                            response_info += "\n```"
-                        elif "properties" in display_schema:
-                            response_info += "\n\n**Output Schema:**\n```json\n"
-                            response_info += json.dumps(display_schema, indent=2)
-                            response_info += "\n```"
-                        else:
-                            response_info += "\n\n**Output Schema:**\n```json\n"
-                            response_info += json.dumps(display_schema, indent=2)
-                            response_info += "\n```"
+                                response_info += (
+                                    "\n\n**Output Schema:** Array of items with the following structure:\n```json\n"
+                                )
+                                response_info += json.dumps(items_schema, indent=2)
+                                response_info += "\n```"
+                            elif "properties" in display_schema:
+                                response_info += "\n\n**Output Schema:**\n```json\n"
+                                response_info += json.dumps(display_schema, indent=2)
+                                response_info += "\n```"
+                            else:
+                                response_info += "\n\n**Output Schema:**\n```json\n"
+                                response_info += json.dumps(display_schema, indent=2)
+                                response_info += "\n```"
 
         tool_description += response_info
 
