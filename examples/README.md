@@ -1,43 +1,66 @@
 # FastAPI-MCP Examples
 
-This directory contains examples of using FastAPI-MCP to generate MCP servers from FastAPI applications.
+This directory contains examples of using FastAPI-MCP to integrate Model Context Protocol (MCP) servers with FastAPI applications.
 
-## Sample App
+## Examples
 
-The `sample_app.py` file contains a simple FastAPI application with CRUD operations for an "Item" resource.
+### `simple_integration.py`
 
-To run the FastAPI application:
+Demonstrates the direct integration approach, where an MCP server is mounted directly to a FastAPI application.
 
-```bash
-python sample_app.py
-```
+Features:
+- FastAPI app with CRUD operations for items
+- MCP server mounted at `/mcp`
+- Automatic conversion of API endpoints to MCP tools
+- Custom MCP tool not based on an API endpoint
 
-To generate an MCP server from the sample app:
-
-```bash
-cd ..  # Go to the root directory
-python -m fastapi_mcp generate examples/sample_app.py
-```
-
-This will create a `mcp_server` directory with the generated MCP server.
-
-To preview the generated MCP server:
+To run this example:
 
 ```bash
-python -m fastapi_mcp preview
+# From the examples directory
+python run_example.py
+
+# Or directly
+uvicorn simple_integration:app --reload
 ```
 
-To run the generated MCP server:
+Then visit:
+- API documentation: http://localhost:8000/docs
+- MCP server endpoint: http://localhost:8000/mcp
+
+### `sample_app.py`
+
+Original example app to demonstrate the legacy code generation approach.
+
+To use with the CLI:
 
 ```bash
-python -m fastapi_mcp run
+# Generate MCP server
+fastapi-mcp generate sample_app.py
+
+# Preview the generated server
+fastapi-mcp preview
+
+# Run the sample app
+uvicorn sample_app:app --reload
+
+# In another terminal, run the MCP server
+fastapi-mcp run
 ```
 
-## How It Works
+## Using with Claude
 
-1. FastAPI-MCP discovers all endpoints in the FastAPI application
-2. It converts the endpoints to MCP tools
-3. It generates a standalone MCP server
-4. It preserves documentation and type information
+To connect Claude to your MCP server:
 
-The generated MCP server can be used with any MCP client, such as Claude. 
+1. Run any of the examples above
+2. In Claude, use the URL of your MCP server (e.g., `http://localhost:8000/mcp`)
+3. Claude will discover the available tools and resources automatically
+
+## What's Next?
+
+These examples demonstrate the basic functionality of FastAPI-MCP. For more advanced use cases, you can:
+
+- Add authentication to your API endpoints
+- Customize the MCP server with additional capabilities
+- Add custom MCP tools that go beyond your API functionality
+- Deploy your integrated app to a production environment 
