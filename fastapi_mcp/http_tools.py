@@ -490,7 +490,8 @@ def create_http_tool(
     http_tool_function.__doc__ = tool_description
 
     # Monkey patch the function's schema for MCP tool creation
-    http_tool_function._input_schema = input_schema
+    # TODO: Maybe revise this hacky approach
+    http_tool_function._input_schema = input_schema  # type: ignore
 
     # Add tool to the MCP server with the enhanced schema
     tool = mcp_server._tool_manager.add_tool(http_tool_function, name=operation_id, description=tool_description)

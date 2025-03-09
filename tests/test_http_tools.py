@@ -8,9 +8,8 @@ from fastapi import FastAPI, Query, Path, Body
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 
-from fastapi_mcp import create_mcp_server, add_mcp_server
+from fastapi_mcp import add_mcp_server
 from fastapi_mcp.http_tools import (
-    create_http_tool,
     resolve_schema_references,
     clean_schema_for_display,
 )
@@ -174,15 +173,3 @@ def test_create_mcp_tools_from_complex_app(complex_app):
 
     # We'll skip checking the body parameter in the update tool as it seems
     # the implementation handles it differently than we expected
-
-
-# We need to comment out the test_create_http_tool test as it requires directly calling
-# create_http_tool with many parameters that would be cumbersome to mock
-# This test would be better implemented at the unit level within the library itself
-"""
-def test_create_http_tool():
-    # This test was designed for direct usage of create_http_tool
-    # But the function signature has changed and requires more parameters than expected
-    # It would be better to test this at the unit level within the library
-    pass
-"""

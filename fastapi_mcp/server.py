@@ -42,7 +42,8 @@ def create_mcp_server(
     # Configure server capabilities if provided
     if capabilities:
         for capability, value in capabilities.items():
-            mcp_server.settings.capabilities[capability] = value
+            # TODO: Maybe revise this hacky approach
+            mcp_server.settings.capabilities[capability] = value  # type: ignore
 
     return mcp_server
 

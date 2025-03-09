@@ -71,7 +71,21 @@ def test_tool_generation_basic(sample_app):
         assert hasattr(tool, "parameters"), "Tool missing 'parameters' property"
         assert hasattr(tool, "fn_metadata"), "Tool missing 'fn_metadata' property"
 
-    # Verify specific properties of the list_items tool
+        # Skip MCP's internal tool that doesn't follow the same patterns
+        if tool.name == "handle_mcp_connection_mcp_get":
+            continue
+
+        # With describe_all_responses=False by default, description should only include success response code
+        assert "200" in tool.description, f"Expected success response code in description for {tool.name}"
+        assert "422" not in tool.description, f"Expected not to see 422 response in tool description for {tool.name}"
+
+        # With describe_full_response_schema=False by default, description should not include the full output schema, only an example
+        assert "Example Response" in tool.description, f"Expected example response in description for {tool.name}"
+        assert "Output Schema" not in tool.description, (
+            f"Expected not to see output schema in description for {tool.name}"
+        )
+
+    # Verify specific parameters are present in the appropriate tools
     list_items_tool = next((t for t in tools if t.name == "list_items_items__get"), None)
     assert list_items_tool is not None, "list_items tool not found"
     assert "skip" in list_items_tool.parameters["properties"], "Expected 'skip' parameter"
@@ -88,17 +102,16 @@ def test_tool_generation_with_full_schema(sample_app):
     # Extract tools for inspection
     tools = mcp_server._tool_manager.list_tools()
 
-    # Verify specific properties of the list_items tool
-    list_items_tool = next((t for t in tools if t.name == "list_items_items__get"), None)
-    assert list_items_tool is not None, "list_items tool not found"
+    # Check all tools have the appropriate schema information
+    for tool in tools:
+        # Skip MCP's internal tool that doesn't follow the same patterns
+        if tool.name == "handle_mcp_connection_mcp_get":
+            continue
 
-    # In the full schema mode, the item schema should be included somewhere in the tool
-    # This might be in the description rather than the parameters
-    description = list_items_tool.description
-
-    # Check that the tool includes information about the Item schema
-    assert "Item" in description, "Item schema should be included in the description"
-    assert "price" in description, "Item properties should be included in the description"
+        description = tool.description
+        # Check that the tool includes information about the Item schema
+        assert "Item" in description, f"Item schema should be included in the description for {tool.name}"
+        assert "price" in description, f"Item properties should be included in the description for {tool.name}"
 
 
 def test_tool_generation_with_all_responses(sample_app):
@@ -111,12 +124,39 @@ def test_tool_generation_with_all_responses(sample_app):
     # Extract tools for inspection
     tools = mcp_server._tool_manager.list_tools()
 
-    # Find the read_item tool
-    read_item_tool = next((t for t in tools if t.name == "read_item_items__item_id__get"), None)
-    assert read_item_tool is not None, "read_item tool not found"
+    # Check all API tools include all response status codes
+    for tool in tools:
+        # Skip MCP's internal tool that doesn't follow the same patterns
+        if tool.name == "handle_mcp_connection_mcp_get":
+            continue
 
-    # With describe_all_responses=True, description should include response status codes
-    assert "200" in read_item_tool.description, "Expected success response code in description"
+        assert "200" in tool.description, f"Expected success response code in description for {tool.name}"
+        assert "422" in tool.description, f"Expected 422 response code in description for {tool.name}"
+
+
+def test_tool_generation_with_all_responses_and_full_schema(sample_app):
+    """Test that MCP tools include all possible responses and full schema when requested."""
+    # Create MCP server with all response status codes and full schema
+    mcp_server = add_mcp_server(
+        sample_app,
+        serve_tools=True,
+        base_url="http://localhost:8000",
+        describe_all_responses=True,
+        describe_full_response_schema=True,
+    )
+
+    # Extract tools for inspection
+    tools = mcp_server._tool_manager.list_tools()
+
+    # Check all tools include all response status codes and the full output schema
+    for tool in tools:
+        # Skip MCP's internal tool that doesn't follow the same patterns
+        if tool.name == "handle_mcp_connection_mcp_get":
+            continue
+
+        assert "200" in tool.description, f"Expected success response code in description for {tool.name}"
+        assert "422" in tool.description, f"Expected 422 response code in description for {tool.name}"
+        assert "Output Schema" in tool.description, f"Expected output schema in description for {tool.name}"
 
 
 def test_custom_tool_addition(sample_app):
