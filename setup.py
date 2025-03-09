@@ -10,7 +10,7 @@ dependencies = pyproject_data["project"]["dependencies"]
 
 setup(
     name="fastapi-mcp",
-    version="0.1.1",
+    version="0.1.2",
     description="Automatic MCP server generator for FastAPI applications - converts FastAPI endpoints to MCP tools for LLM integration",
     author="Tadata Inc.",
     author_email="itay@tadata.com",
@@ -34,7 +34,7 @@ setup(
         "Topic :: Internet :: WWW/HTTP",
         "Framework :: FastAPI",
     ],
-    keywords=["fastapi", "mcp", "llm", "claude", "ai", "tools", "api", "conversion"],
+    keywords=["fastapi", "openapi", "mcp", "llm", "claude", "ai", "tools", "api", "conversion"],
     project_urls={
         "Homepage": "https://github.com/tadata-org/fastapi_mcp",
         "Documentation": "https://github.com/tadata-org/fastapi_mcp#readme",
