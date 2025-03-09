@@ -2,7 +2,7 @@
 Simple example of using FastAPI-MCP to add an MCP server to a FastAPI app.
 """
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -27,7 +27,7 @@ class Item(BaseModel):
 
 
 # In-memory database
-items_db = {}
+items_db: dict[int, Item] = {}
 
 
 # Define some endpoints
@@ -49,7 +49,7 @@ async def read_item(item_id: int):
     Raises a 404 error if the item does not exist.
     """
     if item_id not in items_db:
-        return {"error": "Item not found"}
+        raise HTTPException(status_code=404, detail="Item not found")
     return items_db[item_id]
 
 
@@ -72,7 +72,7 @@ async def update_item(item_id: int, item: Item):
     Raises a 404 error if the item does not exist.
     """
     if item_id not in items_db:
-        return {"error": "Item not found"}
+        raise HTTPException(status_code=404, detail="Item not found")
 
     item.id = item_id
     items_db[item_id] = item
@@ -87,7 +87,7 @@ async def delete_item(item_id: int):
     Raises a 404 error if the item does not exist.
     """
     if item_id not in items_db:
-        return {"error": "Item not found"}
+        raise HTTPException(status_code=404, detail="Item not found")
 
     del items_db[item_id]
     return {"message": "Item deleted successfully"}

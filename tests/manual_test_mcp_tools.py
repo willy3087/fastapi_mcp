@@ -4,6 +4,8 @@ Test script to verify that an MCP server is properly exposing tools.
 This script connects to the MCP server, initializes a session, and requests a list of available tools.
 """
 
+# TODO: Turn this into a pytest test
+
 import json
 import sys
 import asyncio

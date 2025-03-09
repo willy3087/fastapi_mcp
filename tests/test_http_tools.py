@@ -6,7 +6,7 @@ This tests the conversion of FastAPI endpoints to MCP tools.
 import pytest
 from fastapi import FastAPI, Query, Path, Body
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 
 from fastapi_mcp import add_mcp_server
 from fastapi_mcp.http_tools import (
