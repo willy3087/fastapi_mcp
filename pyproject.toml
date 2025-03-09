@@ -47,7 +47,14 @@ Documentation = "https://github.com/tadata-org/fastapi_mcp#readme"
 "Changelog" = "https://github.com/tadata-org/fastapi_mcp/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
-dev = []
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "mypy>=1.15.0",
+    "ruff>=0.9.10",
+    "types-setuptools>=75.8.2.20250305",
+]
 
 [project.scripts]
 fastapi-mcp = "fastapi_mcp.cli:app"
@@ -56,9 +63,17 @@ fastapi-mcp = "fastapi_mcp.cli:app"
 line-length = 120
 target-version = "py310"
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = "test_*.py"
+
 [dependency-groups]
 dev = [
     "mypy>=1.15.0",
     "ruff>=0.9.10",
     "types-setuptools>=75.8.2.20250305",
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
 ]
