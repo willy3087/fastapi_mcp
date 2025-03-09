@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2]
+
+### Changed
+- Complete refactor: transformed from a code generator to a direct integration library
+- Replaced the CLI-based approach with a direct API for adding MCP servers to FastAPI applications
+- Integrated MCP servers now mount directly to FastAPI apps at runtime instead of generating separate code
+- Simplified the API with a single `add_mcp_server` function for quick integration
+- Removed code generation entirely in favor of runtime integration
+
+### Added
+- Main `add_mcp_server` function for simple MCP server integration
+- Support for adding custom MCP tools alongside API-derived tools
+- Improved test suite
+- Manage with uv
+
+### Removed
+- CLI interface and all associated commands (generate, run, install, etc.)
+- Code generation functionality
+
 ## [0.1.1] - 2024-07-03
 
 ### Fixed
