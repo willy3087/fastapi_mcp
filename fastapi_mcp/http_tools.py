@@ -112,6 +112,28 @@ def create_http_tool(
     if description:
         tool_description += f"\n\n{description}"
 
+    # Add response schema information to description
+    if responses:
+        response_info = "\n\n### Responses:\n"
+        for status_code, response_data in responses.items():
+            response_desc = response_data.get("description", "")
+            response_info += f"\n**{status_code}**: {response_desc}"
+
+            # Add schema information if available
+            if "content" in response_data:
+                for content_type, content_data in response_data["content"].items():
+                    if "schema" in content_data:
+                        schema = content_data["schema"]
+                        response_info += f"\nContent-Type: {content_type}"
+
+                        # Format schema information
+                        if "properties" in schema:
+                            response_info += "\n\nSchema:\n```json\n"
+                            response_info += json.dumps(schema, indent=2)
+                            response_info += "\n```"
+
+        tool_description += response_info
+
     # Organize parameters by type
     path_params = []
     query_params = []
@@ -148,6 +170,51 @@ def create_http_tool(
                             },
                         )
                     )
+
+    # Create input schema properties for all parameters
+    properties = {}
+    required_props = []
+
+    # Add path parameters to properties
+    for param_name, param in path_params:
+        param_schema = param.get("schema", {})
+        param_desc = param.get("description", "")
+        param_required = param.get("required", True)  # Path params are usually required
+
+        properties[param_name] = {
+            "type": param_schema.get("type", "string"),
+            "title": param_name,
+            "description": param_desc,
+        }
+
+        if param_required:
+            required_props.append(param_name)
+
+    # Add query parameters to properties
+    for param_name, param in query_params:
+        param_schema = param.get("schema", {})
+        param_desc = param.get("description", "")
+        param_required = param.get("required", False)
+
+        properties[param_name] = {
+            "type": param_schema.get("type", "string"),
+            "title": param_name,
+            "description": param_desc,
+        }
+
+        if param_required:
+            required_props.append(param_name)
+
+    # Add body parameters to properties
+    for param_name, param in body_params:
+        param_schema = param.get("schema", {})
+        param_required = param.get("required", False)
+
+        properties[param_name] = param_schema
+        properties[param_name]["title"] = param_name
+
+        if param_required:
+            required_props.append(param_name)
 
     # Function to dynamically call the API endpoint
     async def http_tool_function(**kwargs):
@@ -194,9 +261,21 @@ def create_http_tool(
         except ValueError:
             return response.text
 
+    # Create a proper input schema for the tool
+    input_schema = {"type": "object", "properties": properties, "title": f"{operation_id}Arguments"}
+
+    if required_props:
+        input_schema["required"] = required_props
+
     # Set the function name and docstring
     http_tool_function.__name__ = operation_id
     http_tool_function.__doc__ = tool_description
 
-    # Add tool to the MCP server
-    mcp_server.add_tool(http_tool_function, name=operation_id, description=tool_description)
+    # Monkey patch the function's schema for MCP tool creation
+    http_tool_function._input_schema = input_schema
+
+    # Add tool to the MCP server with the enhanced schema
+    tool = mcp_server._tool_manager.add_tool(http_tool_function, name=operation_id, description=tool_description)
+
+    # Update the tool's parameters to use our custom schema instead of the auto-generated one
+    tool.parameters = input_schema
