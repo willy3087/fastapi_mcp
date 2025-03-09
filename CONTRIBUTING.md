@@ -70,16 +70,6 @@ uv run pytest
 pytest
 ```
 
-## Project Architecture
-
-FastAPI-MCP uses a direct integration approach to add MCP functionality to FastAPI applications:
-
-1. The `server.py` module handles creating and mounting MCP servers to FastAPI apps
-2. The `http_tools.py` module converts FastAPI endpoints to MCP tools
-3. All integration happens at runtime - there is no code generation involved
-
-When contributing, please keep this architecture in mind and ensure your changes maintain the seamless integration experience.
-
 ## Pull Request Process
 
 1. Ensure your code follows the style guidelines of the project
