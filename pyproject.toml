@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "tomli"]
 build-backend = "hatchling.build"
 
 [project]
@@ -34,6 +34,7 @@ dependencies = [
     "uvicorn>=0.20.0",
     "requests>=2.25.0",
     "inspect-mate>=0.0.2",
+    "tomli>=2.2.1",
 ]
 
 [project.urls]
@@ -45,25 +46,18 @@ Documentation = "https://github.com/tadata-org/fastapi_mcp#readme"
 "Changelog" = "https://github.com/tadata-org/fastapi_mcp/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=7.0.0",
-    "black>=23.0.0",
-    "isort>=5.0.0",
-    "mypy>=1.0.0",
-    "ruff>=0.1.0",
-]
+dev = []
 
 [project.scripts]
 fastapi-mcp = "fastapi_mcp.cli:app"
 
-[tool.black]
-line-length = 100
-target-version = ["py310"]
-
-[tool.isort]
-profile = "black"
-line_length = 100
-
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py310"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15.0",
+    "ruff>=0.9.10",
+    "types-setuptools>=75.8.2.20250305",
+]

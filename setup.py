@@ -1,4 +1,12 @@
 from setuptools import setup
+import tomli
+
+# Read dependencies from pyproject.toml
+with open("pyproject.toml", "rb") as f:
+    pyproject_data = tomli.load(f)
+
+# Get dependencies from pyproject.toml
+dependencies = pyproject_data["project"]["dependencies"]
 
 setup(
     name="fastapi-mcp",
@@ -8,16 +16,7 @@ setup(
     author_email="itay@tadata.com",
     packages=["fastapi_mcp"],
     python_requires=">=3.10",
-    install_requires=[
-        "fastapi>=0.100.0",
-        "typer>=0.9.0",
-        "rich>=13.0.0",
-        "mcp>=1.3.0",
-        "pydantic>=2.0.0",
-        "uvicorn>=0.20.0",
-        "requests>=2.25.0",
-        "inspect-mate>=0.0.2",
-    ],
+    install_requires=dependencies,
     entry_points={
         "console_scripts": [
             "fastapi-mcp=fastapi_mcp.cli:app",
@@ -44,4 +43,4 @@ setup(
         "Source Code": "https://github.com/tadata-org/fastapi_mcp",
         "Changelog": "https://github.com/tadata-org/fastapi_mcp/blob/main/CHANGELOG.md",
     },
-) 
+)
