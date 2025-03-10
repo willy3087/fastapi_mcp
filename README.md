@@ -1,6 +1,6 @@
 # FastAPI-MCP
 
-A zero-configuration tool for integrating Model Context Protocol (MCP) servers with FastAPI applications.
+A zero-configuration tool for automatically exposing FastAPI endpoints as Model Context Protocol (MCP) tools.
 
 [![PyPI version](https://badge.fury.io/py/fastapi-mcp.svg)](https://pypi.org/project/fastapi-mcp/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/fastapi-mcp.svg)](https://pypi.org/project/fastapi-mcp/)
@@ -10,9 +10,9 @@ A zero-configuration tool for integrating Model Context Protocol (MCP) servers w
 - **Direct integration** - Mount an MCP server directly to your FastAPI app
 - **Zero configuration** required - just point it at your FastAPI app and it works
 - **Automatic discovery** of all FastAPI endpoints and conversion to MCP tools
-- **Type-safe conversion** from FastAPI endpoints to MCP tools
-- **Documentation preservation** from FastAPI to MCP
-- **Custom tools** - Add custom MCP tools alongside your API endpoints
+- **Preserving schemas** of your request models and response models
+- **Preserve documentation** of all your endpoints, just as it is in Swagger
+- **Extend** - Add custom MCP tools alongside the auto-generated ones
 
 ## Installation
 
@@ -27,8 +27,6 @@ Alternatively, you can install with pip:
 ```bash
 pip install fastapi-mcp
 ```
-
-For detailed installation instructions and alternative methods, see [INSTALL.md](INSTALL.md).
 
 ## Basic Usage
 
@@ -69,7 +67,7 @@ mcp_server = add_mcp_server(
     describe_full_response_schema=True      # False by default. Include full JSON schema in tool descriptions, instead of just an LLM-friendly response example.
 )
 
-# Add custom tools in addition to existing APIs.
+# Optionally add custom tools in addition to existing APIs.
 @mcp_server.tool()
 async def get_server_time() -> str:
     """Get the current server time."""
@@ -80,34 +78,6 @@ async def get_server_time() -> str:
 ## Examples
 
 See the [examples](examples) directory for complete examples.
-
-### Simple integration example:
-
-```python
-from fastapi import FastAPI
-from fastapi_mcp import add_mcp_server
-
-app = FastAPI(title="Simple API")
-
-@app.get("/hello/{name}")
-async def hello(name: str):
-    """Say hello to someone"""
-    return {"message": f"Hello, {name}!"}
-
-# Add MCP server
-mcp_server = add_mcp_server(app, mount_path="/mcp")
-
-# Optionally add custom tools
-@mcp_server.tool()
-async def get_current_time():
-    """Get the current server time"""
-    from datetime import datetime
-    return datetime.now().isoformat()
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
-```
 
 ## Connecting to the MCP Server
 
