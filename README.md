@@ -107,6 +107,10 @@ uv run pytest
 
 For more details about contributing, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Community
+
+Join [MCParty Slack community](https://join.slack.com/t/themcparty/shared_invite/zt-30yxr1zdi-2FG~XjBA0xIgYSYuKe7~Xg) to connect with other MCP enthusiasts, ask questions, and share your experiences with FastAPI-MCP.
+
 ## Requirements
 
 - Python 3.10+
