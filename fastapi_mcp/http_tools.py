@@ -12,7 +12,7 @@ import httpx
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from mcp.server.fastmcp import FastMCP
-from pydantic import  Field
+from pydantic import Field
 
 logger = logging.getLogger("fastapi_mcp")
 
@@ -468,7 +468,7 @@ def create_http_tool(
             elif method.lower() == "put":
                 response = await client.put(url, params=query, headers=headers, json=body)
             elif method.lower() == "delete":
-                response = await client.delete(url, params=query, headers=headers, json=body)
+                response = await client.delete(url, params=query, headers=headers)
             elif method.lower() == "patch":
                 response = await client.patch(url, params=query, headers=headers, json=body)
             else:
