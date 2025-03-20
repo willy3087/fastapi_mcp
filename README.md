@@ -83,9 +83,11 @@ See the [examples](examples) directory for complete examples.
 
 Once your FastAPI app with MCP integration is running, you can connect to it with any MCP client supporting SSE, such as Cursor:
 
-1. Run your application
+1. Run your application.
+
 2. In Cursor -> Settings -> MCP, use the URL of your MCP server endpoint (e.g., `http://localhost:8000/mcp`) as sse.
-3. Cursor will discover all available tools and resources automatically
+
+3. Cursor will discover all available tools and resources automatically.
 
 ## Connecting to the MCP Server using [mcp-proxy stdio](https://github.com/sparfenyuk/mcp-proxy?tab=readme-ov-file#1-stdio-to-sse) 
 
@@ -109,7 +111,8 @@ On Windows:
 }
 ```
 On MacOS: 
-you might need to provide the full path to the mcp-proxy executable under "command", find it by running `which mcp-proxy`.
+
+You might need to provide the full path to the mcp-proxy executable under "command", find it by running `which mcp-proxy`.
 
 4. Claude Desktop will discover all available tools and resources automatically
 
