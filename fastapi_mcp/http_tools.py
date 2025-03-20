@@ -12,6 +12,7 @@ import httpx
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from mcp.server.fastmcp import FastMCP
+from pydantic import  Field
 
 logger = logging.getLogger("fastapi_mcp")
 
@@ -435,7 +436,7 @@ def create_http_tool(
             required_props.append(param_name)
 
     # Function to dynamically call the API endpoint
-    async def http_tool_function(**kwargs):
+    async def http_tool_function(kwargs: Dict[str, Any] = Field(default_factory=dict)):
         # Prepare URL with path parameters
         url = f"{base_url}{path}"
         for param_name, _ in path_params:
