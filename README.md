@@ -81,11 +81,11 @@ See the [examples](examples) directory for complete examples.
 
 ## Connecting to the MCP Server
 
-Once your FastAPI app with MCP integration is running, you can connect to it with any MCP client, such as Claude:
+Once your FastAPI app with MCP integration is running, you can connect to it with any MCP client, such as Cursor:
 
 1. Run your application
-2. In Claude, use the URL of your MCP server endpoint (e.g., `http://localhost:8000/mcp`)
-3. Claude will discover all available tools and resources automatically
+2. In Cursor -> Settings -> MCP, use the URL of your MCP server endpoint (e.g., `http://localhost:8000/mcp`) as sse.
+3. Cursor will discover all available tools and resources automatically
 
 ## Development and Contributing
 
