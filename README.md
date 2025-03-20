@@ -79,13 +79,35 @@ async def get_server_time() -> str:
 
 See the [examples](examples) directory for complete examples.
 
-## Connecting to the MCP Server
+## Connecting to the MCP Server using SSE
 
-Once your FastAPI app with MCP integration is running, you can connect to it with any MCP client, such as Cursor:
+Once your FastAPI app with MCP integration is running, you can connect to it with any MCP client supporting SSE, such as Cursor:
 
 1. Run your application
 2. In Cursor -> Settings -> MCP, use the URL of your MCP server endpoint (e.g., `http://localhost:8000/mcp`) as sse.
 3. Cursor will discover all available tools and resources automatically
+
+## Connecting to the MCP Server using [mcp-proxy stdio](https://github.com/sparfenyuk/mcp-proxy?tab=readme-ov-file#1-stdio-to-sse) 
+
+If your MCP client does not support SSE, for example Claude Desktop: 
+
+1. Run your application
+2. Install [mcp-proxy](https://github.com/sparfenyuk/mcp-proxy?tab=readme-ov-file#installing-via-pypi), for example:
+```bash
+uv tool install mcp-proxy
+```
+3. In Claude Desktop MCP config file:
+```json
+{
+  "mcpServers": {
+    "my-api-mcp-proxy": {
+        "command": "mcp-proxy",
+        "args": ["http://127.0.0.1:8000/mcp"]
+    }
+  }
+}
+```
+4. Claude Desktop will discover all available tools and resources automatically
 
 ## Development and Contributing
 
