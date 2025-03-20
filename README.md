@@ -97,7 +97,7 @@ If your MCP client does not support SSE, for example Claude Desktop:
 
 2. Install [mcp-proxy](https://github.com/sparfenyuk/mcp-proxy?tab=readme-ov-file#installing-via-pypi), for example: `uv tool install mcp-proxy`.
 
-3. In Claude Desktop MCP config file:
+3. Add in Claude Desktop MCP config file (`claude_desktop_config.json`):
 
 On Windows:
 ```json
@@ -111,8 +111,17 @@ On Windows:
 }
 ```
 On MacOS: 
-
-You might need to provide the full path to the mcp-proxy executable under "command", find it by running `which mcp-proxy`.
+```json
+{
+  "mcpServers": {
+    "my-api-mcp-proxy": {
+        "command": "/Full/Path/To/Your/Executable/mcp-proxy",
+        "args": ["http://127.0.0.1:8000/mcp"]
+    }
+  }
+}
+```
+Find the path to mcp-proxy by running in Terminal: `which mcp-proxy`.
 
 4. Claude Desktop will discover all available tools and resources automatically
 
