@@ -19,7 +19,7 @@ uv venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install development dependencies with uv
-uv add -e ".[dev]"
+uv sync --extra dev
 
 # Alternatively, using pip
 # python -m venv venv

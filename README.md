@@ -137,7 +137,7 @@ cd fastapi_mcp
 # Create a virtual environment and install dependencies with uv
 uv venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv add -e ".[dev]"
+uv sync --extra dev
 
 # Run tests
 uv run pytest
