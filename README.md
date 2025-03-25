@@ -1,9 +1,17 @@
-# FastAPI-MCP
-
-A zero-configuration tool for automatically exposing FastAPI endpoints as Model Context Protocol (MCP) tools.
+<p align="center"><a href="https://github.com/tadata-org/fastapi_mcp"><img src="https://github.com/user-attachments/assets/609d5b8b-37a1-42c4-87e2-f045b60026b1" alt="fastapi-to-mcp" height="100"/></a></p>
+<h1 align="center">FastAPI-MCP</h1>
+<p align="center">A zero-configuration tool for automatically exposing FastAPI endpoints as Model Context Protocol (MCP) tools.</p>
+<div align="center">
 
 [![PyPI version](https://badge.fury.io/py/fastapi-mcp.svg)](https://pypi.org/project/fastapi-mcp/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/fastapi-mcp.svg)](https://pypi.org/project/fastapi-mcp/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009485.svg?logo=fastapi&logoColor=white)](#)
+![](https://badge.mcpx.dev?type=dev 'MCP Dev')
+
+</div>
+
+<p align="center"><a href="https://github.com/tadata-org/fastapi_mcp"><img src="https://github.com/user-attachments/assets/1cba1bf2-2fa4-46c7-93ac-1e9bb1a95257" alt="fastapi-mcp-usage" height="400"/></a></p>
+
 
 ## Features
 
@@ -127,23 +135,9 @@ Find the path to mcp-proxy by running in Terminal: `which mcp-proxy`.
 
 ## Development and Contributing
 
-If you're interested in contributing to FastAPI-MCP:
+Thank you for considering contributing to FastAPI-MCP open source projects! It’s people like you that make it a reality for users in our community.
 
-```bash
-# Clone the repository
-git clone https://github.com/tadata-org/fastapi_mcp.git
-cd fastapi_mcp
-
-# Create a virtual environment and install dependencies with uv
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv sync --extra dev
-
-# Run tests
-uv run pytest
-```
-
-For more details about contributing, see [CONTRIBUTING.md](CONTRIBUTING.md).
+Before you get started, please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Community
 

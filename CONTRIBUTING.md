@@ -7,13 +7,20 @@ First off, thank you for considering contributing to FastAPI-MCP!
 1. Make sure you have Python 3.10+ installed
 2. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (recommended) or pip
 3. Fork the repository
-4. Clone your fork and set up the development environment:
+4. Clone your fork
 
 ```bash
 # Clone your fork
 git clone https://github.com/YOUR-USERNAME/fastapi_mcp.git
 cd fastapi-mcp
 
+# Add the upstream remote
+git remote add upstream https://github.com/tadata-org/fastapi_mcp.git
+```
+
+5. Set up the development environment:
+
+```bash
 # Create a virtual environment with uv (recommended)
 uv venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
@@ -29,7 +36,7 @@ uv sync --extra dev
 
 ## Development Process
 
-1. Fork the repository
+1. Fork the repository and set the upstream remote
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
 4. Run type checking (`uv run mypy .`)
@@ -37,7 +44,7 @@ uv sync --extra dev
 6. Format your code (`uv run ruff check .` and `uv run ruff format .`)
 7. Commit your changes (`git commit -m 'Add some amazing feature'`)
 8. Push to the branch (`git push origin feature/amazing-feature`)
-9. Open a Pull Request
+9. Open a Pull Request on [the project repository](https://github.com/tadata-org/fastapi_mcp/)
 
 ## Code Style
 
