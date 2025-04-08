@@ -140,7 +140,7 @@ def extract_model_examples_from_components(
     return examples
 
 
-def generate_example_from_schema(schema: Dict[str, Any], model_name: Optional[str] = None) -> Any:
+def generate_example_from_schema(schema: Dict[str, Any]) -> Any:
     """
     Generate a simple example response from a JSON schema.
 
@@ -153,20 +153,6 @@ def generate_example_from_schema(schema: Dict[str, Any], model_name: Optional[st
     """
     if not schema or not isinstance(schema, dict):
         return None
-
-    # Special handling for known model types
-    if model_name == "Item":
-        # Create a realistic Item example since this is commonly used
-        return {
-            "id": 1,
-            "name": "Hammer",
-            "description": "A tool for hammering nails",
-            "price": 9.99,
-            "tags": ["tool", "hardware"],
-        }
-    elif model_name == "HTTPValidationError":
-        # Create a realistic validation error example
-        return {"detail": [{"loc": ["body", "name"], "msg": "field required", "type": "value_error.missing"}]}
 
     # Handle different types
     schema_type = schema.get("type")
