@@ -1,9 +1,3 @@
-"""
-Server module for FastAPI-MCP.
-
-This module provides functionality for creating and mounting MCP servers to FastAPI applications.
-"""
-
 from contextlib import asynccontextmanager
 from typing import Dict, Optional, Any, Tuple, List, Union, AsyncIterator
 

@@ -1,10 +1,3 @@
-"""
-Direct OpenAPI to MCP Tools Conversion Module.
-
-This module provides functionality for directly converting OpenAPI schema to MCP tool specifications
-and for executing HTTP tools.
-"""
-
 import json
 import logging
 from typing import Any, Dict, List, Union
@@ -14,7 +7,7 @@ import httpx
 import mcp.types as types
 
 
-logger = logging.getLogger("fastapi_mcp")
+logger = logging.getLogger(__name__)
 
 
 async def execute_api_tool(

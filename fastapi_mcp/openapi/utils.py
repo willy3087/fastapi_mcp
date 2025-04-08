@@ -1,9 +1,3 @@
-"""
-OpenAPI utility functions for FastAPI-MCP.
-
-This module provides utility functions for working with OpenAPI schemas.
-"""
-
 from typing import Any, Dict, List, Optional
 
 

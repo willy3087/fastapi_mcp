@@ -1,10 +1,3 @@
-"""
-Direct OpenAPI to MCP Tools Conversion Module.
-
-This module provides functionality for directly converting OpenAPI schema to MCP tool specifications
-and for executing HTTP tools.
-"""
-
 import json
 import logging
 from typing import Any, Dict, List, Tuple
@@ -18,7 +11,7 @@ from .utils import (
     get_single_param_type_from_schema,
 )
 
-logger = logging.getLogger("fastapi_mcp")
+logger = logging.getLogger(__name__)
 
 
 def convert_openapi_to_mcp_tools(
@@ -50,11 +43,13 @@ def convert_openapi_to_mcp_tools(
         for method, operation in path_item.items():
             # Skip non-HTTP methods
             if method not in ["get", "post", "put", "delete", "patch"]:
+                logger.warning(f"Skipping non-HTTP method: {method}")
                 continue
 
             # Get operation metadata
             operation_id = operation.get("operationId")
             if not operation_id:
+                logger.warning(f"Skipping operation with no operationId: {operation}")
                 continue
 
             # Save operation details for later HTTP calls
@@ -78,8 +73,8 @@ def convert_openapi_to_mcp_tools(
             if responses:
                 response_info = "\n\n### Responses:\n"
 
-                # Find the success response (usually 200 or 201)
-                success_codes = ["200", "201", "202", 200, 201, 202]
+                # Find the success response
+                success_codes = range(200, 300)
                 success_response = None
                 for status_code in success_codes:
                     if str(status_code) in responses:

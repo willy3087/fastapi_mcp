@@ -13,14 +13,10 @@ except Exception:
     __version__ = "0.0.0.dev0"
 
 from .server import add_mcp_server, create_mcp_server, mount_mcp_server
-from .openapi.convert import convert_openapi_to_mcp_tools
-from .execute import execute_api_tool
 
 
 __all__ = [
     "add_mcp_server",
     "create_mcp_server",
     "mount_mcp_server",
-    "convert_openapi_to_mcp_tools",
-    "execute_api_tool",
 ]
