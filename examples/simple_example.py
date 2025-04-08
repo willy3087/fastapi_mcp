@@ -10,7 +10,6 @@ from fastapi_mcp import FastApiMCP
 # Add MCP server to the FastAPI app
 mcp = FastApiMCP(
     items.app,
-    mount_path="/mcp",
     name="Item API MCP",
     description="MCP server for the Item API",
     base_url="http://localhost:8000",
