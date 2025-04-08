@@ -167,6 +167,6 @@ class FastApiMCP:
         # Route for MCP messages
         @router.post(f"{mount_path}/messages/")
         async def handle_post_message(request: Request):
-            await sse_transport.handle_fastapi_post_message(request)
+            return await sse_transport.handle_fastapi_post_message(request)
 
         logger.info(f"MCP server listening at {mount_path}")
