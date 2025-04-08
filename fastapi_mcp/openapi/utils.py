@@ -10,15 +10,15 @@ from decimal import Decimal
 from uuid import UUID
 
 PYTHON_TYPE_IMPORTS = {
-        "List": List,
-        "Dict": Dict,
-        "Any": Any,
-        "Optional": Optional,
-        "Union": Union,
-        "date": date,
-        "datetime": datetime,
-        "Decimal": Decimal,
-        "UUID": UUID,
+    "List": List,
+    "Dict": Dict,
+    "Any": Any,
+    "Optional": Optional,
+    "Union": Union,
+    "date": date,
+    "datetime": datetime,
+    "Decimal": Decimal,
+    "UUID": UUID,
 }
 # Type mapping from OpenAPI types to Python types
 OPENAPI_PYTHON_TYPES_MAP = {
@@ -28,18 +28,15 @@ OPENAPI_PYTHON_TYPES_MAP = {
     "integer": "int",
     "boolean": "bool",
     "null": "None",
-    
     # Complex types
     "object": "Dict[str, Any]",  # More specific than Dict[Any, Any]
     "array": "List[Any]",
-    
     # Numeric formats
     "int32": "int",
     "int64": "int",
     "float": "float",
     "double": "float",
     "decimal": "Decimal",
-    
     # String formats - Common
     "date": "date",  # datetime.date
     "date-time": "datetime",  # datetime.datetime
@@ -48,7 +45,6 @@ OPENAPI_PYTHON_TYPES_MAP = {
     "password": "str",
     "byte": "bytes",  # base64 encoded
     "binary": "bytes",  # raw binary
-    
     # String formats - Extended
     "email": "str",
     "uuid": "UUID",  # uuid.UUID
@@ -62,36 +58,29 @@ OPENAPI_PYTHON_TYPES_MAP = {
     "regex": "str",
     "json-pointer": "str",
     "relative-json-pointer": "str",
-    
     # Rich text formats
     "markdown": "str",
     "html": "str",
-    
     # Media types
     "image/*": "bytes",
     "audio/*": "bytes",
     "video/*": "bytes",
     "application/*": "bytes",
-    
     # Special formats
     "format": "str",  # Custom format string
     "pattern": "str",  # Regular expression pattern
     "contentEncoding": "str",  # e.g., base64, quoted-printable
     "contentMediaType": "str",  # MIME type
-    
     # Additional numeric formats
     "currency": "Decimal",  # For precise decimal calculations
     "percentage": "float",
-    
     # Geographic coordinates
     "latitude": "float",
     "longitude": "float",
-    
     # Time-related
     "timezone": "str",  # Could use zoneinfo.ZoneInfo in Python 3.9+
     "unix-time": "int",  # Unix timestamp
     "iso-week-date": "str",  # ISO 8601 week date
-    
     # Specialized string formats
     "isbn": "str",
     "issn": "str",
@@ -102,14 +91,14 @@ OPENAPI_PYTHON_TYPES_MAP = {
     "language-code": "str",  # ISO 639 language codes
     "country-code": "str",  # ISO 3166 country codes
     "currency-code": "str",  # ISO 4217 currency codes
-    
     # Default fallback
-    "unknown": "Any"
+    "unknown": "Any",
 }
+
 
 def get_single_param_type_from_schema(param_schema: Dict[str, Any]) -> str:
     """
-    Get the type of a parameter from the schema. 
+    Get the type of a parameter from the schema.
     If the schema is a union type, return the first type.
     """
     if "anyOf" in param_schema:
@@ -121,6 +110,7 @@ def get_single_param_type_from_schema(param_schema: Dict[str, Any]) -> str:
         return "string"
     return param_schema.get("type", "string")
 
+
 def get_python_type_and_default(parsed_param_schema: Dict[str, Any]) -> tuple[str, bool]:
     """
     Parse parameters into a python type and default value string.
@@ -131,9 +121,10 @@ def get_python_type_and_default(parsed_param_schema: Dict[str, Any]) -> tuple[st
     """
     # Handle direct type specification
     python_type = OPENAPI_PYTHON_TYPES_MAP.get(parsed_param_schema.get("type", ""), "Any")
-    if "default" in parsed_param_schema:   
+    if "default" in parsed_param_schema:
         return f"{python_type} = {parsed_param_schema.get('default')}", True
     return python_type, False
+
 
 def resolve_schema_references(schema_part: Dict[str, Any], reference_schema: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -170,12 +161,11 @@ def resolve_schema_references(schema_part: Dict[str, Any], reference_schema: Dic
         elif isinstance(value, list):
             # Only process list items that are dictionaries since only they can contain refs
             schema_part[key] = [
-                resolve_schema_references(item, reference_schema) if isinstance(item, dict)
-                else item 
-                for item in value
+                resolve_schema_references(item, reference_schema) if isinstance(item, dict) else item for item in value
             ]
 
     return schema_part
+
 
 def clean_schema_for_display(schema: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -219,6 +209,7 @@ def clean_schema_for_display(schema: Dict[str, Any]) -> Dict[str, Any]:
 
     return schema
 
+
 def extract_model_examples_from_components(
     model_name: str, openapi_schema: Dict[str, Any]
 ) -> Optional[List[Dict[str, Any]]]:
@@ -251,6 +242,7 @@ def extract_model_examples_from_components(
         examples = [schema["example"]]
 
     return examples
+
 
 def generate_example_from_schema(schema: Dict[str, Any], model_name: Optional[str] = None) -> Any:
     """
