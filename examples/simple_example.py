@@ -4,17 +4,19 @@ Simple example of using FastAPI-MCP to add an MCP server to a FastAPI app.
 
 from examples.apps import items
 
-from fastapi_mcp import add_mcp_server
+from fastapi_mcp import FastApiMCP
 
 
 # Add MCP server to the FastAPI app
-mcp = add_mcp_server(
+mcp = FastApiMCP(
     items.app,
     mount_path="/mcp",
     name="Item API MCP",
     description="MCP server for the Item API",
     base_url="http://localhost:8000",
 )
+
+mcp.mount()
 
 if __name__ == "__main__":
     import uvicorn

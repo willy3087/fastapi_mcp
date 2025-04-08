@@ -12,11 +12,9 @@ except Exception:
     # Fallback for local development
     __version__ = "0.0.0.dev0"
 
-from .server import add_mcp_server, create_mcp_server, mount_mcp_server
+from .server import FastApiMCP
 
 
 __all__ = [
-    "add_mcp_server",
-    "create_mcp_server",
-    "mount_mcp_server",
+    "FastApiMCP",
 ]
