@@ -19,6 +19,7 @@ def create_mcp_server(
     name: Optional[str] = None,
     description: Optional[str] = None,
     capabilities: Optional[Dict[str, Any]] = None,
+    base_url: Optional[str] = None,
     describe_all_responses: bool = False,
     describe_full_response_schema: bool = False,
 ) -> Server:
@@ -30,6 +31,7 @@ def create_mcp_server(
         name: Name for the MCP server (defaults to app.title)
         description: Description for the MCP server (defaults to app.description)
         capabilities: Optional capabilities for the MCP server (ignored in direct conversion)
+        base_url: Base URL for API requests (defaults to http://localhost:$PORT)
         describe_all_responses: Whether to include all possible response schemas in tool descriptions. Recommended to keep False, as the LLM will probably derive if there is an error.
         describe_full_response_schema: Whether to include full json schema for responses in tool descriptions. Recommended to keep False, as examples are more LLM friendly, and save tokens.
 
@@ -41,6 +43,7 @@ def create_mcp_server(
         app,
         name,
         description,
+        base_url,
         describe_all_responses=describe_all_responses,
         describe_full_response_schema=describe_full_response_schema,
     )
@@ -53,8 +56,6 @@ def mount_mcp_server(
     mcp_server: Server,
     mount_path: str = "/mcp",
     base_url: Optional[str] = None,
-    describe_all_responses: bool = False,
-    describe_full_response_schema: bool = False,
 ) -> None:
     """
     Mount an MCP server to a FastAPI app.
@@ -64,8 +65,6 @@ def mount_mcp_server(
         mcp_server: The MCP server to mount
         mount_path: Path where the MCP server will be mounted
         base_url: Base URL for API requests
-        describe_all_responses: Whether to include all possible response schemas in tool descriptions. Recommended to keep False, as the LLM will probably derive if there is an error.
-        describe_full_response_schema: Whether to include full json schema for responses in tool descriptions. Recommended to keep False, as examples are more LLM friendly, and save tokens.
     """
     # Get OpenAPI schema from FastAPI app for operation mapping
     from fastapi.openapi.utils import get_openapi
@@ -81,11 +80,7 @@ def mount_mcp_server(
 
     # Extract operation map for HTTP calls
     # The function returns a tuple (tools, operation_map)
-    result = convert_openapi_to_mcp_tools(
-        openapi_schema,
-        describe_all_responses=describe_all_responses,
-        describe_full_response_schema=describe_full_response_schema,
-    )
+    result = convert_openapi_to_mcp_tools(openapi_schema)
     operation_map = result[1]
 
     # Mount using the direct approach
