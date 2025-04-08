@@ -2,11 +2,10 @@
 Simple example of using FastAPI-MCP to add an MCP server to a FastAPI app.
 """
 
-from examples.apps import items
-from examples.setup import setup_logging
+from examples.shared.apps import items
+from examples.shared.setup import setup_logging
 
 from fastapi_mcp import FastApiMCP
-
 
 setup_logging()
 

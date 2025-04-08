@@ -1,3 +1,5 @@
+import json
+import httpx
 from contextlib import asynccontextmanager
 from typing import Dict, Optional, Any, List, Union, AsyncIterator
 
@@ -7,7 +9,6 @@ from mcp.server.lowlevel.server import Server
 import mcp.types as types
 
 from fastapi_mcp.openapi.convert import convert_openapi_to_mcp_tools
-from fastapi_mcp.execute import execute_api_tool
 from fastapi_mcp.transport.sse import FastApiSseTransport
 
 from logging import getLogger
@@ -37,7 +38,7 @@ class FastApiMCP:
         self._describe_all_responses = describe_all_responses
         self._describe_full_response_schema = describe_full_response_schema
 
-        self.mcp_server = self.create_server()
+        self.server = self.create_server()
 
     def create_server(self) -> Server:
         """
@@ -127,13 +128,15 @@ class FastApiMCP:
             operation_map = ctx.lifespan_context["operation_map"]
 
             # Execute the tool
-            return await execute_api_tool(base_url, name, arguments, operation_map)
+            return await self.execute_api_tool(base_url, name, arguments, operation_map)
 
         return mcp_server
 
     def mount(self, router: Optional[FastAPI | APIRouter] = None, mount_path: str = "/mcp") -> None:
         """
-        Mount the MCP server to the FastAPI app.
+        Mount the MCP server to **any** FastAPI app or APIRouter.
+        There is no requirement that the FastAPI app or APIRouter is the same as the one that the MCP
+        server was created from.
 
         Args:
             router: The FastAPI app or APIRouter to mount the MCP server to. If not provided, the MCP
@@ -156,12 +159,10 @@ class FastApiMCP:
         @router.get(mount_path)
         async def handle_mcp_connection(request: Request):
             async with sse_transport.connect_sse(request.scope, request.receive, request._send) as (reader, writer):
-                await self.mcp_server.run(
+                await self.server.run(
                     reader,
                     writer,
-                    self.mcp_server.create_initialization_options(
-                        notification_options=None, experimental_capabilities={}
-                    ),
+                    self.server.create_initialization_options(notification_options=None, experimental_capabilities={}),
                 )
 
         # Route for MCP messages
@@ -170,3 +171,84 @@ class FastApiMCP:
             return await sse_transport.handle_fastapi_post_message(request)
 
         logger.info(f"MCP server listening at {mount_path}")
+
+    async def execute_api_tool(
+        self, base_url: str, tool_name: str, arguments: Dict[str, Any], operation_map: Dict[str, Dict[str, Any]]
+    ) -> List[Union[types.TextContent, types.ImageContent, types.EmbeddedResource]]:
+        """
+        Execute an MCP tool by making an HTTP request to the corresponding API endpoint.
+
+        Args:
+            base_url: The base URL for the API
+            tool_name: The name of the tool to execute
+            arguments: The arguments for the tool
+            operation_map: A mapping from tool names to operation details
+
+        Returns:
+            The result as MCP content types
+        """
+        if tool_name not in operation_map:
+            return [types.TextContent(type="text", text=f"Unknown tool: {tool_name}")]
+
+        operation = operation_map[tool_name]
+        path: str = operation["path"]
+        method: str = operation["method"]
+        parameters: List[Dict[str, Any]] = operation.get("parameters", [])
+        arguments = arguments.copy() if arguments else {}  # Deep copy arguments to avoid mutating the original
+
+        # Prepare URL with path parameters
+        url = f"{base_url}{path}"
+        for param in parameters:
+            if param.get("in") == "path" and param.get("name") in arguments:
+                param_name = param.get("name", None)
+                if param_name is None:
+                    raise ValueError(f"Parameter name is None for parameter: {param}")
+                url = url.replace(f"{{{param_name}}}", str(arguments.pop(param_name)))
+
+        # Prepare query parameters
+        query = {}
+        for param in parameters:
+            if param.get("in") == "query" and param.get("name") in arguments:
+                param_name = param.get("name", None)
+                if param_name is None:
+                    raise ValueError(f"Parameter name is None for parameter: {param}")
+                query[param_name] = arguments.pop(param_name)
+
+        # Prepare headers
+        headers = {}
+        for param in parameters:
+            if param.get("in") == "header" and param.get("name") in arguments:
+                param_name = param.get("name", None)
+                if param_name is None:
+                    raise ValueError(f"Parameter name is None for parameter: {param}")
+                headers[param_name] = arguments.pop(param_name)
+
+        # Prepare request body (remaining kwargs)
+        body = arguments if arguments else None
+
+        try:
+            # Make request
+            logger.debug(f"Making {method.upper()} request to {url}")
+            async with httpx.AsyncClient() as client:
+                if method.lower() == "get":
+                    response = await client.get(url, params=query, headers=headers)
+                elif method.lower() == "post":
+                    response = await client.post(url, params=query, headers=headers, json=body)
+                elif method.lower() == "put":
+                    response = await client.put(url, params=query, headers=headers, json=body)
+                elif method.lower() == "delete":
+                    response = await client.delete(url, params=query, headers=headers)
+                elif method.lower() == "patch":
+                    response = await client.patch(url, params=query, headers=headers, json=body)
+                else:
+                    return [types.TextContent(type="text", text=f"Unsupported HTTP method: {method}")]
+
+            # Process response
+            try:
+                result = response.json()
+                return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
+            except ValueError:
+                return [types.TextContent(type="text", text=response.text)]
+
+        except Exception as e:
+            return [types.TextContent(type="text", text=f"Error calling {tool_name}: {str(e)}")]

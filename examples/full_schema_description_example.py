@@ -2,11 +2,10 @@
 Simple example of using FastAPI-MCP to add an MCP server to a FastAPI app.
 """
 
-from examples.apps import items
-from examples.setup import setup_logging
+from examples.shared.apps import items
+from examples.shared.setup import setup_logging
 
 from fastapi_mcp import FastApiMCP
-
 
 setup_logging()
 
@@ -17,8 +16,8 @@ mcp = FastApiMCP(
     name="Item API MCP",
     description="MCP server for the Item API",
     base_url="http://localhost:8000",
-    describe_full_response_schema=True,
-    describe_all_responses=True,
+    describe_full_response_schema=True,  # Describe the full response JSON-schema instead of just a response example
+    describe_all_responses=True,  # Describe all the possible responses instead of just the success (2XX) response
 )
 
 mcp.mount()
