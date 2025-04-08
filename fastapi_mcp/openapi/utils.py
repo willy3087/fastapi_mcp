@@ -4,96 +4,7 @@ OpenAPI utility functions for FastAPI-MCP.
 This module provides utility functions for working with OpenAPI schemas.
 """
 
-from typing import Any, Dict, List, Optional, Union
-from datetime import date, datetime
-from decimal import Decimal
-from uuid import UUID
-
-PYTHON_TYPE_IMPORTS = {
-    "List": List,
-    "Dict": Dict,
-    "Any": Any,
-    "Optional": Optional,
-    "Union": Union,
-    "date": date,
-    "datetime": datetime,
-    "Decimal": Decimal,
-    "UUID": UUID,
-}
-# Type mapping from OpenAPI types to Python types
-OPENAPI_PYTHON_TYPES_MAP = {
-    # Core data types (OpenAPI 3.x)
-    "string": "str",
-    "number": "Union[float, Decimal]",  # Could be float or Decimal for precision
-    "integer": "int",
-    "boolean": "bool",
-    "null": "None",
-    # Complex types
-    "object": "Dict[str, Any]",  # More specific than Dict[Any, Any]
-    "array": "List[Any]",
-    # Numeric formats
-    "int32": "int",
-    "int64": "int",
-    "float": "float",
-    "double": "float",
-    "decimal": "Decimal",
-    # String formats - Common
-    "date": "date",  # datetime.date
-    "date-time": "datetime",  # datetime.datetime
-    "time": "str",  # Could use datetime.time
-    "duration": "str",  # Could use datetime.timedelta
-    "password": "str",
-    "byte": "bytes",  # base64 encoded
-    "binary": "bytes",  # raw binary
-    # String formats - Extended
-    "email": "str",
-    "uuid": "UUID",  # uuid.UUID
-    "uri": "str",
-    "uri-reference": "str",
-    "uri-template": "str",
-    "url": "str",
-    "hostname": "str",
-    "ipv4": "str",
-    "ipv6": "str",
-    "regex": "str",
-    "json-pointer": "str",
-    "relative-json-pointer": "str",
-    # Rich text formats
-    "markdown": "str",
-    "html": "str",
-    # Media types
-    "image/*": "bytes",
-    "audio/*": "bytes",
-    "video/*": "bytes",
-    "application/*": "bytes",
-    # Special formats
-    "format": "str",  # Custom format string
-    "pattern": "str",  # Regular expression pattern
-    "contentEncoding": "str",  # e.g., base64, quoted-printable
-    "contentMediaType": "str",  # MIME type
-    # Additional numeric formats
-    "currency": "Decimal",  # For precise decimal calculations
-    "percentage": "float",
-    # Geographic coordinates
-    "latitude": "float",
-    "longitude": "float",
-    # Time-related
-    "timezone": "str",  # Could use zoneinfo.ZoneInfo in Python 3.9+
-    "unix-time": "int",  # Unix timestamp
-    "iso-week-date": "str",  # ISO 8601 week date
-    # Specialized string formats
-    "isbn": "str",
-    "issn": "str",
-    "iban": "str",
-    "credit-card": "str",
-    "phone": "str",
-    "postal-code": "str",
-    "language-code": "str",  # ISO 639 language codes
-    "country-code": "str",  # ISO 3166 country codes
-    "currency-code": "str",  # ISO 4217 currency codes
-    # Default fallback
-    "unknown": "Any",
-}
+from typing import Any, Dict, List, Optional
 
 
 def get_single_param_type_from_schema(param_schema: Dict[str, Any]) -> str:
@@ -109,21 +20,6 @@ def get_single_param_type_from_schema(param_schema: Dict[str, Any]) -> str:
             return next(iter(types))
         return "string"
     return param_schema.get("type", "string")
-
-
-def get_python_type_and_default(parsed_param_schema: Dict[str, Any]) -> tuple[str, bool]:
-    """
-    Parse parameters into a python type and default value string.
-    Returns:
-        A tuple containing:
-            - A string representing the Python type annotation (e.g. "str", "int = 0", etc.)
-            - A boolean indicating whether a default value is present
-    """
-    # Handle direct type specification
-    python_type = OPENAPI_PYTHON_TYPES_MAP.get(parsed_param_schema.get("type", ""), "Any")
-    if "default" in parsed_param_schema:
-        return f"{python_type} = {parsed_param_schema.get('default')}", True
-    return python_type, False
 
 
 def resolve_schema_references(schema_part: Dict[str, Any], reference_schema: Dict[str, Any]) -> Dict[str, Any]:

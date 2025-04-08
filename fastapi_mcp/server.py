@@ -13,8 +13,8 @@ from mcp.server.lowlevel.server import Server
 from mcp.server.sse import SseServerTransport
 import mcp.types as types
 
-from .openapi.convert import convert_openapi_to_mcp_tools
-from .execute import execute_api_tool
+from fastapi_mcp.openapi.convert import convert_openapi_to_mcp_tools
+from fastapi_mcp.execute import execute_api_tool
 
 
 def create_mcp_server(
