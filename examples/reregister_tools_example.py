@@ -14,7 +14,20 @@ mcp = FastApiMCP(
     base_url="http://localhost:8000",
 )
 
+
+# MCP server
 mcp.mount()
+
+
+# This endpoint will not be registered as a tool, since it was added after the MCP instance was created
+@items.app.get("/new/endpoint/", operation_id="new_endpoint", response_model=dict[str, str])
+async def new_endpoint():
+    return {"message": "Hello, world!"}
+
+
+# But if you re-run the setup, the new endpoints will now be exposed.
+mcp.setup_server()
+
 
 if __name__ == "__main__":
     import uvicorn

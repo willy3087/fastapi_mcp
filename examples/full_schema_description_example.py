@@ -1,7 +1,3 @@
-"""
-Simple example of using FastAPI-MCP to add an MCP server to a FastAPI app.
-"""
-
 from examples.shared.apps import items
 from examples.shared.setup import setup_logging
 

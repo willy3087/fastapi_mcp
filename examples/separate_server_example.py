@@ -1,7 +1,3 @@
-"""
-Simple example of using FastAPI-MCP to add an MCP server to a FastAPI app.
-"""
-
 from fastapi import FastAPI
 import asyncio
 import uvicorn
