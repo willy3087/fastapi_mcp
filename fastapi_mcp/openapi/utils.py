@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 
 def get_single_param_type_from_schema(param_schema: Dict[str, Any]) -> str:
@@ -100,47 +100,12 @@ def clean_schema_for_display(schema: Dict[str, Any]) -> Dict[str, Any]:
     return schema
 
 
-def extract_model_examples_from_components(
-    model_name: str, openapi_schema: Dict[str, Any]
-) -> Optional[List[Dict[str, Any]]]:
-    """
-    Extract examples from a model definition in the OpenAPI components.
-
-    Args:
-        model_name: The name of the model to extract examples from
-        openapi_schema: The full OpenAPI schema
-
-    Returns:
-        List of example dictionaries if found, None otherwise
-    """
-    if "components" not in openapi_schema or "schemas" not in openapi_schema["components"]:
-        return None
-
-    if model_name not in openapi_schema["components"]["schemas"]:
-        return None
-
-    schema = openapi_schema["components"]["schemas"][model_name]
-
-    # Look for examples in the schema
-    examples = None
-
-    # Check for examples field directly (OpenAPI 3.1.0+)
-    if "examples" in schema:
-        examples = schema["examples"]
-    # Check for example field (older OpenAPI versions)
-    elif "example" in schema:
-        examples = [schema["example"]]
-
-    return examples
-
-
 def generate_example_from_schema(schema: Dict[str, Any]) -> Any:
     """
     Generate a simple example response from a JSON schema.
 
     Args:
         schema: The JSON schema to generate an example from
-        model_name: Optional model name for special handling
 
     Returns:
         An example object based on the schema
