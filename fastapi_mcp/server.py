@@ -31,8 +31,8 @@ class FastApiMCP:
         self.tools: List[types.Tool]
 
         self.fastapi = fastapi
-        self.name = name
-        self.description = description
+        self.name = name or self.fastapi.title or "FastAPI MCP"
+        self.description = description or self.fastapi.description
 
         self._base_url = base_url
         self._describe_all_responses = describe_all_responses
@@ -68,10 +68,6 @@ class FastApiMCP:
             routes=self.fastapi.routes,
         )
 
-        # Get server name and description from app if not provided
-        server_name = self.name or self.fastapi.title or "FastAPI MCP"
-        server_description = self.description or self.fastapi.description
-
         # Convert OpenAPI schema to MCP tools
         self.tools, self.operation_map = convert_openapi_to_mcp_tools(
             openapi_schema,
@@ -98,7 +94,7 @@ class FastApiMCP:
             self._base_url = self._base_url[:-1]
 
         # Create the MCP server
-        mcp_server: Server = Server(server_name, server_description)
+        mcp_server: Server = Server(self.name, self.description)
 
         # Create a lifespan context manager to store the base_url and operation_map
         @asynccontextmanager
