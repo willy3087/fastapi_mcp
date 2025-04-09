@@ -1,7 +1,6 @@
 import json
 import httpx
-from contextlib import asynccontextmanager
-from typing import Dict, Optional, Any, List, Union, AsyncIterator
+from typing import Dict, Optional, Any, List, Union
 
 from fastapi import FastAPI, Request, APIRouter
 from fastapi.openapi.utils import get_openapi
@@ -10,6 +9,7 @@ import mcp.types as types
 
 from fastapi_mcp.openapi.convert import convert_openapi_to_mcp_tools
 from fastapi_mcp.transport.sse import FastApiSseTransport
+from fastapi_mcp.types import AsyncClientProtocol
 
 from logging import getLogger
 
@@ -26,7 +26,24 @@ class FastApiMCP:
         base_url: Optional[str] = None,
         describe_all_responses: bool = False,
         describe_full_response_schema: bool = False,
+        http_client: Optional[AsyncClientProtocol] = None,
     ):
+        """
+        Create an MCP server from a FastAPI app.
+
+        Args:
+            fastapi: The FastAPI application
+            name: Name for the MCP server (defaults to app.title)
+            description: Description for the MCP server (defaults to app.description)
+            base_url: Base URL for API requests. If not provided, the base URL will be determined from the
+                FastAPI app's root path. Although optional, it is highly recommended to provide a base URL,
+                as the root path would be different when the app is deployed.
+            describe_all_responses: Whether to include all possible response schemas in tool descriptions
+            describe_full_response_schema: Whether to include full json schema for responses in tool descriptions
+            http_client: Optional HTTP client to use for API calls. If not provided, a new httpx.AsyncClient will be created.
+                This is primarily for testing purposes.
+        """
+
         self.operation_map: Dict[str, Dict[str, Any]]
         self.tools: List[types.Tool]
 
@@ -38,27 +55,11 @@ class FastApiMCP:
         self._describe_all_responses = describe_all_responses
         self._describe_full_response_schema = describe_full_response_schema
 
+        self._http_client = http_client or httpx.AsyncClient()
+
         self.server = self.create_server()
 
     def create_server(self) -> Server:
-        """
-        Create an MCP server from the FastAPI app.
-
-        Args:
-            fastapi: The FastAPI application
-            name: Name for the MCP server (defaults to app.title)
-            description: Description for the MCP server (defaults to app.description)
-            base_url: Base URL for API requests. If not provided, the base URL will be determined from the
-                FastAPI app's root path. Although optional, it is highly recommended to provide a base URL,
-                as the root path would be different when the app is deployed.
-            describe_all_responses: Whether to include all possible response schemas in tool descriptions
-            describe_full_response_schema: Whether to include full json schema for responses in tool descriptions
-
-        Returns:
-            A tuple containing:
-            - The created MCP Server instance (NOT mounted to the app)
-            - A mapping of operation IDs to operation details for HTTP execution
-        """
         # Get OpenAPI schema from FastAPI app
         openapi_schema = get_openapi(
             title=self.fastapi.title,
@@ -93,23 +94,12 @@ class FastApiMCP:
         if self._base_url.endswith("/"):
             self._base_url = self._base_url[:-1]
 
-        # Create the MCP server
+        # Create the MCP lowlevel server
         mcp_server: Server = Server(self.name, self.description)
-
-        # Create a lifespan context manager to store the base_url and operation_map
-        @asynccontextmanager
-        async def server_lifespan(server) -> AsyncIterator[Dict[str, Any]]:
-            # Store context data that will be available to all server handlers
-            context = {"base_url": self._base_url, "operation_map": self.operation_map}
-            yield context
-
-        # Use our custom lifespan
-        mcp_server.lifespan = server_lifespan
 
         # Register handlers for tools
         @mcp_server.list_tools()
         async def handle_list_tools() -> List[types.Tool]:
-            """Handler for the tools/list request"""
             return self.tools
 
         # Register the tool call handler
@@ -117,14 +107,13 @@ class FastApiMCP:
         async def handle_call_tool(
             name: str, arguments: Dict[str, Any]
         ) -> List[Union[types.TextContent, types.ImageContent, types.EmbeddedResource]]:
-            """Handler for the tools/call request"""
-            # Get context from server lifespan
-            ctx = mcp_server.request_context
-            base_url = ctx.lifespan_context["base_url"]
-            operation_map = ctx.lifespan_context["operation_map"]
-
-            # Execute the tool
-            return await self.execute_api_tool(base_url, name, arguments, operation_map)
+            return await self._execute_api_tool(
+                client=self._http_client,
+                base_url=self._base_url or "",
+                tool_name=name,
+                arguments=arguments,
+                operation_map=self.operation_map,
+            )
 
         return mcp_server
 
@@ -168,8 +157,13 @@ class FastApiMCP:
 
         logger.info(f"MCP server listening at {mount_path}")
 
-    async def execute_api_tool(
-        self, base_url: str, tool_name: str, arguments: Dict[str, Any], operation_map: Dict[str, Dict[str, Any]]
+    async def _execute_api_tool(
+        self,
+        client: AsyncClientProtocol,
+        base_url: str,
+        tool_name: str,
+        arguments: Dict[str, Any],
+        operation_map: Dict[str, Dict[str, Any]],
     ) -> List[Union[types.TextContent, types.ImageContent, types.EmbeddedResource]]:
         """
         Execute an MCP tool by making an HTTP request to the corresponding API endpoint.
@@ -179,12 +173,13 @@ class FastApiMCP:
             tool_name: The name of the tool to execute
             arguments: The arguments for the tool
             operation_map: A mapping from tool names to operation details
+            client: Optional HTTP client to use (primarily for testing)
 
         Returns:
             The result as MCP content types
         """
         if tool_name not in operation_map:
-            return [types.TextContent(type="text", text=f"Unknown tool: {tool_name}")]
+            raise Exception(f"Unknown tool: {tool_name}")
 
         operation = operation_map[tool_name]
         path: str = operation["path"]
@@ -192,7 +187,6 @@ class FastApiMCP:
         parameters: List[Dict[str, Any]] = operation.get("parameters", [])
         arguments = arguments.copy() if arguments else {}  # Deep copy arguments to avoid mutating the original
 
-        # Prepare URL with path parameters
         url = f"{base_url}{path}"
         for param in parameters:
             if param.get("in") == "path" and param.get("name") in arguments:
@@ -201,7 +195,6 @@ class FastApiMCP:
                     raise ValueError(f"Parameter name is None for parameter: {param}")
                 url = url.replace(f"{{{param_name}}}", str(arguments.pop(param_name)))
 
-        # Prepare query parameters
         query = {}
         for param in parameters:
             if param.get("in") == "query" and param.get("name") in arguments:
@@ -210,7 +203,6 @@ class FastApiMCP:
                     raise ValueError(f"Parameter name is None for parameter: {param}")
                 query[param_name] = arguments.pop(param_name)
 
-        # Prepare headers
         headers = {}
         for param in parameters:
             if param.get("in") == "header" and param.get("name") in arguments:
@@ -219,32 +211,57 @@ class FastApiMCP:
                     raise ValueError(f"Parameter name is None for parameter: {param}")
                 headers[param_name] = arguments.pop(param_name)
 
-        # Prepare request body (remaining kwargs)
         body = arguments if arguments else None
 
         try:
-            # Make request
             logger.debug(f"Making {method.upper()} request to {url}")
-            async with httpx.AsyncClient() as client:
-                if method.lower() == "get":
-                    response = await client.get(url, params=query, headers=headers)
-                elif method.lower() == "post":
-                    response = await client.post(url, params=query, headers=headers, json=body)
-                elif method.lower() == "put":
-                    response = await client.put(url, params=query, headers=headers, json=body)
-                elif method.lower() == "delete":
-                    response = await client.delete(url, params=query, headers=headers)
-                elif method.lower() == "patch":
-                    response = await client.patch(url, params=query, headers=headers, json=body)
-                else:
-                    return [types.TextContent(type="text", text=f"Unsupported HTTP method: {method}")]
+            response = await self._request(client, method, url, query, headers, body)
 
-            # Process response
+            # TODO: Better typing for the AsyncClientProtocol. It should return a ResponseProtocol that has a json() method that returns a dict/list/etc.
             try:
                 result = response.json()
-                return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
+                result_text = json.dumps(result, indent=2)
+            except json.JSONDecodeError:
+                if hasattr(response, "text"):
+                    result_text = response.text
+                else:
+                    result_text = response.content
+
+            # If not raising an exception, the MCP server will return the result as a regular text response, without marking it as an error.
+            # TODO: Use a raise_for_status() method on the response (it needs to also be implemented in the AsyncClientProtocol)
+            if 400 <= response.status_code < 600:
+                raise Exception(
+                    f"Error calling {tool_name}. Status code: {response.status_code}. Response: {response.text}"
+                )
+
+            try:
+                return [types.TextContent(type="text", text=result_text)]
             except ValueError:
-                return [types.TextContent(type="text", text=response.text)]
+                return [types.TextContent(type="text", text=result_text)]
 
         except Exception as e:
-            return [types.TextContent(type="text", text=f"Error calling {tool_name}: {str(e)}")]
+            logger.exception(f"Error calling {tool_name}")
+            raise e
+
+    async def _request(
+        self,
+        client: AsyncClientProtocol,
+        method: str,
+        url: str,
+        query: Dict[str, Any],
+        headers: Dict[str, str],
+        body: Optional[Any],
+    ) -> Any:
+        """Helper method to make the actual HTTP request"""
+        if method.lower() == "get":
+            return await client.get(url, params=query, headers=headers)
+        elif method.lower() == "post":
+            return await client.post(url, params=query, headers=headers, json=body)
+        elif method.lower() == "put":
+            return await client.put(url, params=query, headers=headers, json=body)
+        elif method.lower() == "delete":
+            return await client.delete(url, params=query, headers=headers)
+        elif method.lower() == "patch":
+            return await client.patch(url, params=query, headers=headers, json=body)
+        else:
+            raise ValueError(f"Unsupported HTTP method: {method}")
