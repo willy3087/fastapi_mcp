@@ -46,6 +46,7 @@ class FastApiMCP:
 
         self.operation_map: Dict[str, Dict[str, Any]]
         self.tools: List[types.Tool]
+        self.server: Server
 
         self.fastapi = fastapi
         self.name = name or self.fastapi.title or "FastAPI MCP"
@@ -57,9 +58,9 @@ class FastApiMCP:
 
         self._http_client = http_client or httpx.AsyncClient()
 
-        self.server = self.create_server()
+        self.setup_server()
 
-    def create_server(self) -> Server:
+    def setup_server(self) -> None:
         # Get OpenAPI schema from FastAPI app
         openapi_schema = get_openapi(
             title=self.fastapi.title,
@@ -115,7 +116,7 @@ class FastApiMCP:
                 operation_map=self.operation_map,
             )
 
-        return mcp_server
+        self.server = mcp_server
 
     def mount(self, router: Optional[FastAPI | APIRouter] = None, mount_path: str = "/mcp") -> None:
         """
