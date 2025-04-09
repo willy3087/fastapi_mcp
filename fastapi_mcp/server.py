@@ -142,7 +142,7 @@ class FastApiMCP:
         sse_transport = FastApiSseTransport(f"{mount_path}/messages/")
 
         # Route for MCP connection
-        @router.get(mount_path)
+        @router.get(mount_path, include_in_schema=False)
         async def handle_mcp_connection(request: Request):
             async with sse_transport.connect_sse(request.scope, request.receive, request._send) as (reader, writer):
                 await self.server.run(
@@ -152,7 +152,7 @@ class FastApiMCP:
                 )
 
         # Route for MCP messages
-        @router.post(f"{mount_path}/messages/")
+        @router.post(f"{mount_path}/messages/", include_in_schema=False)
         async def handle_post_message(request: Request):
             return await sse_transport.handle_fastapi_post_message(request)
 
