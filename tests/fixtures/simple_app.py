@@ -25,7 +25,7 @@ def simple_fastapi_app() -> FastAPI:
         skip: int = Query(0, description="Number of items to skip"),
         limit: int = Query(10, description="Max number of items to return"),
         sort_by: Optional[str] = Query(None, description="Field to sort by"),
-    ):
+    ) -> List[Item]:
         """List all items with pagination and sorting options."""
         return items[skip : skip + limit]
 
@@ -33,7 +33,7 @@ def simple_fastapi_app() -> FastAPI:
     async def read_item(
         item_id: int = Path(..., description="The ID of the item to retrieve"),
         include_details: bool = Query(False, description="Include additional details"),
-    ):
+    ) -> Item:
         """Get a specific item by its ID with optional details."""
         found_item = next((item for item in items if item.id == item_id), None)
         if found_item is None:
@@ -41,7 +41,7 @@ def simple_fastapi_app() -> FastAPI:
         return found_item
 
     @app.post("/items/", response_model=Item, tags=["items"], operation_id="create_item")
-    async def create_item(item: Item = Body(..., description="The item to create")):
+    async def create_item(item: Item = Body(..., description="The item to create")) -> Item:
         """Create a new item in the database."""
         items.append(item)
         return item
@@ -50,18 +50,18 @@ def simple_fastapi_app() -> FastAPI:
     async def update_item(
         item_id: int = Path(..., description="The ID of the item to update"),
         item: Item = Body(..., description="The updated item data"),
-    ):
+    ) -> Item:
         """Update an existing item."""
         item.id = item_id
         return item
 
     @app.delete("/items/{item_id}", status_code=204, tags=["items"], operation_id="delete_item")
-    async def delete_item(item_id: int = Path(..., description="The ID of the item to delete")):
+    async def delete_item(item_id: int = Path(..., description="The ID of the item to delete")) -> None:
         """Delete an item from the database."""
         return None
 
-    @app.get("/error", status_code=200, tags=["error"], operation_id="raise_error")
-    async def raise_error():
+    @app.get("/error", tags=["error"], operation_id="raise_error")
+    async def raise_error() -> None:
         """Fail on purpose and cause a 500 error."""
         raise Exception("This is a test error")
 

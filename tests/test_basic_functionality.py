@@ -22,7 +22,7 @@ def test_create_mcp_server(simple_fastapi_app: FastAPI):
     assert len(mcp.operation_map) > 0, "Should have operation mapping"
 
     # Check that the operation map contains all expected operations from simple_app
-    expected_operations = ["list_items", "get_item", "create_item", "update_item", "delete_item"]
+    expected_operations = ["list_items", "get_item", "create_item", "update_item", "delete_item", "raise_error"]
     for op in expected_operations:
         assert op in mcp.operation_map, f"Operation {op} not found in operation map"
 

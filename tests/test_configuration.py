@@ -81,7 +81,9 @@ def test_describe_all_responses_config_simple_app(simple_fastapi_app: FastAPI):
 
     for tool in mcp_default.tools:
         assert tool.description is not None
-        if tool.name != "delete_item":
+        if tool.name == "raise_error":
+            pass
+        elif tool.name != "delete_item":
             assert tool.description.count("**200**") == 1, "The description should contain a 200 status code"
             assert tool.description.count("**Example Response:**") == 1, (
                 "The description should only contain one example response"
@@ -103,7 +105,9 @@ def test_describe_all_responses_config_simple_app(simple_fastapi_app: FastAPI):
 
     for tool in mcp_all_responses.tools:
         assert tool.description is not None
-        if tool.name != "delete_item":
+        if tool.name == "raise_error":
+            pass
+        elif tool.name != "delete_item":
             assert tool.description.count("**200**") == 1, "The description should contain a 200 status code"
             assert tool.description.count("**422**") == 1, "The description should contain a 422 status code"
             assert tool.description.count("**Example Response:**") == 2, (
@@ -137,7 +141,9 @@ def test_describe_full_response_schema_config_simple_app(simple_fastapi_app: Fas
 
     for tool in mcp_full_response_schema.tools:
         assert tool.description is not None
-        if tool.name != "delete_item":
+        if tool.name == "raise_error":
+            pass
+        elif tool.name != "delete_item":
             assert tool.description.count("**200**") == 1, "The description should contain a 200 status code"
             assert tool.description.count("**Example Response:**") == 1, (
                 "The description should only contain one example response"
@@ -170,7 +176,9 @@ def test_describe_all_responses_and_full_response_schema_config_simple_app(simpl
 
     for tool in mcp_all_responses_and_full_response_schema.tools:
         assert tool.description is not None
-        if tool.name != "delete_item":
+        if tool.name == "raise_error":
+            pass
+        elif tool.name != "delete_item":
             assert tool.description.count("**200**") == 1, "The description should contain a 200 status code"
             assert tool.description.count("**422**") == 1, "The description should contain a 422 status code"
             assert tool.description.count("**Example Response:**") == 2, (
