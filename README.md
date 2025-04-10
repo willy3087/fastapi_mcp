@@ -22,7 +22,7 @@
 - **Automatic discovery** of all FastAPI endpoints and conversion to MCP tools
 - **Preserving schemas** of your request models and response models
 - **Preserve documentation** of all your endpoints, just as it is in Swagger
-- **Extend** - Add custom MCP tools alongside the auto-generated ones
+- **Flexible deployment** - Mount your MCP server to the same app, or deploy separately
 
 ## Installation
 
@@ -44,45 +44,101 @@ The simplest way to use FastAPI-MCP is to add an MCP server directly to your Fas
 
 ```python
 from fastapi import FastAPI
-from fastapi_mcp import add_mcp_server
+from fastapi_mcp import FastApiMCP
 
-# Your FastAPI app
 app = FastAPI()
 
-# Mount the MCP server to your app
-add_mcp_server(
-    app,                    # Your FastAPI app
-    mount_path="/mcp",      # Where to mount the MCP server
-    name="My API MCP",      # Name for the MCP server
+mcp = FastApiMCP(
+    app,
+
+    # Optional parameters
+    name="My API MCP",
+    description="My API description",
+    base_url="http://localhost:8000",
 )
+
+# Mount the MCP server directly to your FastAPI app
+mcp.mount()
 ```
 
 That's it! Your auto-generated MCP server is now available at `https://app.base.url/mcp`.
+
+> **Note on `base_url`**: While `base_url` is optional, it is highly recommended to provide it explicitly. The `base_url` tells the MCP server where to send API requests when tools are called. Without it, the library will attempt to determine the URL automatically, which may not work correctly in deployed environments where the internal and external URLs differ.
 
 ## Advanced Usage
 
 FastAPI-MCP provides several ways to customize and control how your MCP server is created and configured. Here are some advanced usage patterns:
 
+### Customizing Schema Description
+
 ```python
 from fastapi import FastAPI
-from fastapi_mcp import add_mcp_server
+from fastapi_mcp import FastApiMCP
 
 app = FastAPI()
 
-mcp_server = add_mcp_server(
-    app,                                    # Your FastAPI app
-    mount_path="/mcp",                      # Where to mount the MCP server
-    name="My API MCP",                      # Name for the MCP server
-    describe_all_responses=True,            # False by default. Include all possible response schemas in tool descriptions, instead of just the successful response.
-    describe_full_response_schema=True      # False by default. Include full JSON schema in tool descriptions, instead of just an LLM-friendly response example.
+mcp = FastApiMCP(
+    app,
+    name="My API MCP",
+    base_url="http://localhost:8000",
+    describe_all_responses=True,     # Include all possible response schemas in tool descriptions
+    describe_full_response_schema=True  # Include full JSON schema in tool descriptions
 )
 
-# Optionally add custom tools in addition to existing APIs.
-@mcp_server.tool()
-async def get_server_time() -> str:
-    """Get the current server time."""
-    from datetime import datetime
-    return datetime.now().isoformat()
+mcp.mount()
+```
+
+### Mounting to a Separate FastAPI App
+
+You can create an MCP server from one FastAPI app and mount it to a different app:
+
+```python
+from fastapi import FastAPI
+from fastapi_mcp import FastApiMCP
+
+# Your API app
+api_app = FastAPI()
+# ... define your API endpoints on api_app ...
+
+# A separate app for the MCP server
+mcp_app = FastAPI()
+
+# Create MCP server from the API app
+mcp = FastApiMCP(
+    api_app,
+    base_url="http://api-host:8001",  # The URL where the API app will be running
+)
+
+# Mount the MCP server to the separate app
+mcp.mount(mcp_app)
+
+# Now you can run both apps separately:
+# uvicorn main:api_app --host api-host --port 8001
+# uvicorn main:mcp_app --host mcp-host --port 8000
+```
+
+### Adding Endpoints After MCP Server Creation
+
+If you add endpoints to your FastAPI app after creating the MCP server, you'll need to refresh the server to include them:
+
+```python
+from fastapi import FastAPI
+from fastapi_mcp import FastApiMCP
+
+app = FastAPI()
+# ... define initial endpoints ...
+
+# Create MCP server
+mcp = FastApiMCP(app)
+mcp.mount()
+
+# Add new endpoints after MCP server creation
+@app.get("/new/endpoint/", operation_id="new_endpoint")
+async def new_endpoint():
+    return {"message": "Hello, world!"}
+
+# Refresh the MCP server to include the new endpoint
+mcp.setup_server()
 ```
 
 ## Examples
@@ -137,11 +193,9 @@ Find the path to mcp-proxy by running in Terminal: `which mcp-proxy`.
 
 ## Development and Contributing
 
-**Notice:** We are currently refactoring our MCP auto-generation system. To avoid potential conflicts, we kindly request that you delay submitting contributions until this notice is removed from the README. Thank you for your understanding and patience.
+Thank you for considering contributing to FastAPI-MCP! We encourage the community to post Issues and Pull Requests.
 
-Thank you for considering contributing to FastAPI-MCP open source projects! It's people like you that make it a reality for users in our community.
-
-Before you get started, please see [CONTRIBUTING.md](CONTRIBUTING.md).
+Before you get started, please see our [Contribution Guide](CONTRIBUTING.md).
 
 ## Community
 
@@ -149,13 +203,9 @@ Join [MCParty Slack community](https://join.slack.com/t/themcparty/shared_invite
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.10+ (Recommended 3.12)
 - uv
 
 ## License
 
 MIT License. Copyright (c) 2024 Tadata Inc.
-
-## About
-
-Developed and maintained by [Tadata Inc.](https://github.com/tadata-org)
