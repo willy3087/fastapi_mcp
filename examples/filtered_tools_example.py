@@ -12,7 +12,7 @@ include_operations_mcp = FastApiMCP(
     items.app,
     name="Item API MCP - Included Operations",
     description="MCP server showing only specific operations",
-    base_url="http://localhost:8001",
+    base_url="http://localhost:8000",
     include_operations=["get_item", "list_items"],
 )
 
@@ -21,7 +21,7 @@ exclude_operations_mcp = FastApiMCP(
     items.app,
     name="Item API MCP - Excluded Operations",
     description="MCP server showing all operations except the excluded ones",
-    base_url="http://localhost:8002",
+    base_url="http://localhost:8000",
     exclude_operations=["create_item", "update_item", "delete_item"],
 )
 
@@ -30,7 +30,7 @@ include_tags_mcp = FastApiMCP(
     items.app,
     name="Item API MCP - Included Tags",
     description="MCP server showing operations with specific tags",
-    base_url="http://localhost:8003",
+    base_url="http://localhost:8000",
     include_tags=["items"],
 )
 
@@ -39,7 +39,7 @@ exclude_tags_mcp = FastApiMCP(
     items.app,
     name="Item API MCP - Excluded Tags",
     description="MCP server showing operations except those with specific tags",
-    base_url="http://localhost:8004",
+    base_url="http://localhost:8000",
     exclude_tags=["search"],
 )
 
@@ -48,7 +48,7 @@ combined_include_mcp = FastApiMCP(
     items.app,
     name="Item API MCP - Combined Include",
     description="MCP server showing operations by combining include filters",
-    base_url="http://localhost:8005",
+    base_url="http://localhost:8000",
     include_operations=["delete_item"],
     include_tags=["search"],
 )
