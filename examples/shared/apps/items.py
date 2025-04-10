@@ -6,8 +6,6 @@ from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 from typing import List, Optional
 
-from fastapi_mcp import add_mcp_server
-
 
 # Create a simple FastAPI app
 app = FastAPI(
@@ -31,7 +29,7 @@ items_db: dict[int, Item] = {}
 
 
 # Define some endpoints
-@app.get("/items/", response_model=List[Item], tags=["items"])
+@app.get("/items/", response_model=List[Item], tags=["items"], operation_id="list_items")
 async def list_items(skip: int = 0, limit: int = 10):
     """
     List all items in the database.
@@ -41,7 +39,7 @@ async def list_items(skip: int = 0, limit: int = 10):
     return list(items_db.values())[skip : skip + limit]
 
 
-@app.get("/items/{item_id}", response_model=Item, tags=["items"])
+@app.get("/items/{item_id}", response_model=Item, tags=["items"], operation_id="get_item")
 async def read_item(item_id: int):
     """
     Get a specific item by its ID.
@@ -53,7 +51,7 @@ async def read_item(item_id: int):
     return items_db[item_id]
 
 
-@app.post("/items/", response_model=Item, tags=["items"])
+@app.post("/items/", response_model=Item, tags=["items"], operation_id="create_item")
 async def create_item(item: Item):
     """
     Create a new item in the database.
@@ -64,7 +62,7 @@ async def create_item(item: Item):
     return item
 
 
-@app.put("/items/{item_id}", response_model=Item, tags=["items"])
+@app.put("/items/{item_id}", response_model=Item, tags=["items"], operation_id="update_item")
 async def update_item(item_id: int, item: Item):
     """
     Update an existing item.
@@ -79,7 +77,7 @@ async def update_item(item_id: int, item: Item):
     return item
 
 
-@app.delete("/items/{item_id}", tags=["items"])
+@app.delete("/items/{item_id}", tags=["items"], operation_id="delete_item")
 async def delete_item(item_id: int):
     """
     Delete an item from the database.
@@ -93,7 +91,7 @@ async def delete_item(item_id: int):
     return {"message": "Item deleted successfully"}
 
 
-@app.get("/items/search/", response_model=List[Item], tags=["search"])
+@app.get("/items/search/", response_model=List[Item], tags=["search"], operation_id="search_items")
 async def search_items(
     q: Optional[str] = Query(None, description="Search query string"),
     min_price: Optional[float] = Query(None, description="Minimum price"),
@@ -135,32 +133,5 @@ sample_items = [
     Item(id=4, name="Saw", description="A tool for cutting wood", price=19.99, tags=["tool", "hardware", "cutting"]),
     Item(id=5, name="Drill", description="A tool for drilling holes", price=49.99, tags=["tool", "hardware", "power"]),
 ]
-
 for item in sample_items:
     items_db[item.id] = item
-
-
-# Add MCP server to the FastAPI app
-mcp_server = add_mcp_server(
-    app,
-    mount_path="/mcp",
-    name="Item API MCP",
-    description="MCP server for the Item API",
-    base_url="http://localhost:8000",
-    describe_all_responses=False,  # Only describe the success response in tool descriptions
-    describe_full_response_schema=False,  # Only show LLM-friendly example response in tool descriptions, not the full json schema
-)
-
-
-# Optionally, you can add custom MCP tools not based on FastAPI endpoints
-@mcp_server.tool()
-async def get_item_count() -> int:
-    """Get the total number of items in the database."""
-    return len(items_db)
-
-
-# Run the server if this file is executed directly
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="127.0.0.1", port=8000)
