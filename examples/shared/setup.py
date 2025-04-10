@@ -6,7 +6,7 @@ from pydantic import BaseModel
 class LoggingConfig(BaseModel):
     LOGGER_NAME: str = "fastapi_mcp"
     LOG_FORMAT: str = "%(levelprefix)s %(asctime)s\t[%(name)s] %(message)s"
-    LOG_LEVEL: str = logging.getLevelName(logging.INFO)
+    LOG_LEVEL: str = logging.getLevelName(logging.DEBUG)
 
     version: int = 1
     disable_existing_loggers: bool = False
