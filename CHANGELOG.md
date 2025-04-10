@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Complete refactor from function-based API to a new class-based API with `FastApiMCP`
+- Explicit separation between MCP instance creation and mounting with `mcp = FastApiMCP(app)` followed by `mcp.mount()`
+- FastAPI-native approach for transport providing more flexible routing options
+- Updated minimum MCP dependency to v1.6.0
+
+### Added
+- Support for deploying MCP servers separately from API service
+- Support for "refreshing" with `setup_server()` when dynamically adding FastAPI routes. Fixes [Issue #19](https://github.com/tadata-org/fastapi_mcp/issues/19)
+- Endpoint filtering capabilities through new parameters:
+  - `include_operations`: Expose only specific operations by their operation IDs
+  - `exclude_operations`: Expose all operations except those with specified operation IDs
+  - `include_tags`: Expose only operations with specific tags
+  - `exclude_tags`: Expose all operations except those with specific tags
+
+### Fixed
+- FastAPI-native approach for transport. Fixes [Issue #28](https://github.com/tadata-org/fastapi_mcp/issues/28)
+- Numerous bugs in OpenAPI schema to tool conversion, addressing [Issue #40](https://github.com/tadata-org/fastapi_mcp/issues/40) and [Issue #45](https://github.com/tadata-org/fastapi_mcp/issues/45)
+
+### Removed
+- Function-based API (`add_mcp_server`, `create_mcp_server`, etc.)
+- Custom tool support via `@mcp.tool()` decorator
+
 ## [0.1.8]
 
 ### Fixed
@@ -73,4 +98,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Claude integration for easy installation and use
 - API integration that automatically makes HTTP requests to FastAPI endpoints
 - Examples directory with sample FastAPI application
-- Basic test suite 
+- Basic test suite

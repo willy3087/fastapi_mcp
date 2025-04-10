@@ -110,6 +110,56 @@ mcp = FastApiMCP(
 mcp.mount()
 ```
 
+### Customizing Exposed Endpoints
+
+You can control which FastAPI endpoints are exposed as MCP tools using Open API operation IDs or tags:
+
+```python
+from fastapi import FastAPI
+from fastapi_mcp import FastApiMCP
+
+app = FastAPI()
+
+# Only include specific operations
+mcp = FastApiMCP(
+    app,
+    include_operations=["get_user", "create_user"]
+)
+
+# Exclude specific operations
+mcp = FastApiMCP(
+    app,
+    exclude_operations=["delete_user"]
+)
+
+# Only include operations with specific tags
+mcp = FastApiMCP(
+    app,
+    include_tags=["users", "public"]
+)
+
+# Exclude operations with specific tags
+mcp = FastApiMCP(
+    app,
+    exclude_tags=["admin", "internal"]
+)
+
+# Combine operation IDs and tags (include mode)
+mcp = FastApiMCP(
+    app,
+    include_operations=["user_login"],
+    include_tags=["public"]
+)
+
+mcp.mount()
+```
+
+Notes on filtering:
+- You cannot use both `include_operations` and `exclude_operations` at the same time
+- You cannot use both `include_tags` and `exclude_tags` at the same time
+- You can combine operation filtering with tag filtering (e.g., use `include_operations` with `include_tags`)
+- When combining filters, a greedy approach will be taken. Endpoints matching either criteria will be included
+
 ### Deploying Separately from Original FastAPI App
 
 You are not limited to serving the MCP on the same FastAPI app from which it was created.
