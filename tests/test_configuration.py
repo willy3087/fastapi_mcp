@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+import pytest
 
 from fastapi_mcp import FastApiMCP
 
@@ -374,3 +375,243 @@ def test_describe_all_responses_and_full_response_schema_config_complex_app(comp
             assert tool.description.count("**Output Schema:**") > 0, (
                 "The description should contain full output schemas"
             )
+
+
+def test_filtering_functionality():
+    """Test that FastApiMCP correctly filters endpoints based on operation IDs and tags."""
+    app = FastAPI()
+
+    # Define endpoints with different operation IDs and tags
+    @app.get("/items/", operation_id="list_items", tags=["items"])
+    async def list_items():
+        return [{"id": 1}]
+
+    @app.get("/items/{item_id}", operation_id="get_item", tags=["items", "read"])
+    async def get_item(item_id: int):
+        return {"id": item_id}
+
+    @app.post("/items/", operation_id="create_item", tags=["items", "write"])
+    async def create_item():
+        return {"id": 2}
+
+    @app.put("/items/{item_id}", operation_id="update_item", tags=["items", "write"])
+    async def update_item(item_id: int):
+        return {"id": item_id}
+
+    @app.delete("/items/{item_id}", operation_id="delete_item", tags=["items", "delete"])
+    async def delete_item(item_id: int):
+        return {"id": item_id}
+
+    @app.get("/search/", operation_id="search_items", tags=["search"])
+    async def search_items():
+        return [{"id": 1}]
+
+    # Test include_operations
+    include_ops_mcp = FastApiMCP(app, include_operations=["get_item", "list_items"])
+    assert len(include_ops_mcp.tools) == 2
+    assert {tool.name for tool in include_ops_mcp.tools} == {"get_item", "list_items"}
+
+    # Test exclude_operations
+    exclude_ops_mcp = FastApiMCP(app, exclude_operations=["delete_item", "search_items"])
+    assert len(exclude_ops_mcp.tools) == 4
+    assert {tool.name for tool in exclude_ops_mcp.tools} == {"get_item", "list_items", "create_item", "update_item"}
+
+    # Test include_tags
+    include_tags_mcp = FastApiMCP(app, include_tags=["read"])
+    assert len(include_tags_mcp.tools) == 1
+    assert {tool.name for tool in include_tags_mcp.tools} == {"get_item"}
+
+    # Test exclude_tags
+    exclude_tags_mcp = FastApiMCP(app, exclude_tags=["write", "delete"])
+    assert len(exclude_tags_mcp.tools) == 3
+    assert {tool.name for tool in exclude_tags_mcp.tools} == {"get_item", "list_items", "search_items"}
+
+    # Test combining include_operations and include_tags
+    combined_include_mcp = FastApiMCP(app, include_operations=["delete_item"], include_tags=["search"])
+    assert len(combined_include_mcp.tools) == 2
+    assert {tool.name for tool in combined_include_mcp.tools} == {"delete_item", "search_items"}
+
+    # Test invalid combinations
+    with pytest.raises(ValueError):
+        FastApiMCP(app, include_operations=["get_item"], exclude_operations=["delete_item"])
+
+    with pytest.raises(ValueError):
+        FastApiMCP(app, include_tags=["items"], exclude_tags=["write"])
+
+
+def test_filtering_edge_cases():
+    """Test edge cases for the filtering functionality."""
+    app = FastAPI()
+
+    # Define endpoints with different operation IDs and tags
+    @app.get("/items/", operation_id="list_items", tags=["items"])
+    async def list_items():
+        return [{"id": 1}]
+
+    @app.get("/items/{item_id}", operation_id="get_item", tags=["items", "read"])
+    async def get_item(item_id: int):
+        return {"id": item_id}
+
+    # Test with no filtering (default behavior)
+    default_mcp = FastApiMCP(app)
+    assert len(default_mcp.tools) == 2
+    assert {tool.name for tool in default_mcp.tools} == {"get_item", "list_items"}
+
+    # Test with empty include_operations
+    empty_include_ops_mcp = FastApiMCP(app, include_operations=[])
+    assert len(empty_include_ops_mcp.tools) == 0
+    assert empty_include_ops_mcp.tools == []
+
+    # Test with empty exclude_operations (should include all)
+    empty_exclude_ops_mcp = FastApiMCP(app, exclude_operations=[])
+    assert len(empty_exclude_ops_mcp.tools) == 2
+    assert {tool.name for tool in empty_exclude_ops_mcp.tools} == {"get_item", "list_items"}
+
+    # Test with empty include_tags
+    empty_include_tags_mcp = FastApiMCP(app, include_tags=[])
+    assert len(empty_include_tags_mcp.tools) == 0
+    assert empty_include_tags_mcp.tools == []
+
+    # Test with empty exclude_tags (should include all)
+    empty_exclude_tags_mcp = FastApiMCP(app, exclude_tags=[])
+    assert len(empty_exclude_tags_mcp.tools) == 2
+    assert {tool.name for tool in empty_exclude_tags_mcp.tools} == {"get_item", "list_items"}
+
+    # Test with non-existent operation IDs
+    nonexistent_ops_mcp = FastApiMCP(app, include_operations=["non_existent_op"])
+    assert len(nonexistent_ops_mcp.tools) == 0
+    assert nonexistent_ops_mcp.tools == []
+
+    # Test with non-existent tags
+    nonexistent_tags_mcp = FastApiMCP(app, include_tags=["non_existent_tag"])
+    assert len(nonexistent_tags_mcp.tools) == 0
+    assert nonexistent_tags_mcp.tools == []
+
+    # Test excluding non-existent operation IDs
+    exclude_nonexistent_ops_mcp = FastApiMCP(app, exclude_operations=["non_existent_op"])
+    assert len(exclude_nonexistent_ops_mcp.tools) == 2
+    assert {tool.name for tool in exclude_nonexistent_ops_mcp.tools} == {"get_item", "list_items"}
+
+    # Test excluding non-existent tags
+    exclude_nonexistent_tags_mcp = FastApiMCP(app, exclude_tags=["non_existent_tag"])
+    assert len(exclude_nonexistent_tags_mcp.tools) == 2
+    assert {tool.name for tool in exclude_nonexistent_tags_mcp.tools} == {"get_item", "list_items"}
+
+    # Test with an endpoint that has no tags
+    @app.get("/no-tags", operation_id="no_tags")
+    async def no_tags():
+        return {"result": "no tags"}
+
+    # Test include_tags with an endpoint that has no tags
+    no_tags_app_mcp = FastApiMCP(app, include_tags=["items"])
+    assert len(no_tags_app_mcp.tools) == 2
+    assert "no_tags" not in {tool.name for tool in no_tags_app_mcp.tools}
+
+    # Test exclude_tags with an endpoint that has no tags
+    no_tags_exclude_mcp = FastApiMCP(app, exclude_tags=["items"])
+    assert len(no_tags_exclude_mcp.tools) == 1
+    assert {tool.name for tool in no_tags_exclude_mcp.tools} == {"no_tags"}
+
+
+def test_filtering_with_missing_operation_ids():
+    """Test filtering behavior with endpoints that don't have operation IDs."""
+    app = FastAPI()
+
+    # Define an endpoint with an operation ID
+    @app.get("/items/", operation_id="list_items", tags=["items"])
+    async def list_items():
+        return [{"id": 1}]
+
+    # Define an endpoint without an operation ID
+    @app.get("/no-op-id/")
+    async def no_op_id():
+        return {"result": "no operation ID"}
+
+    # Test that both endpoints are discovered
+    default_mcp = FastApiMCP(app)
+
+    # FastAPI-MCP will generate an operation ID for endpoints without one
+    # The auto-generated ID will typically be 'no_op_id_no_op_id__get'
+    assert len(default_mcp.tools) == 2
+
+    # Get the auto-generated operation ID
+    auto_generated_op_id = None
+    for tool in default_mcp.tools:
+        if tool.name != "list_items":
+            auto_generated_op_id = tool.name
+            break
+
+    assert auto_generated_op_id is not None
+    assert "list_items" in {tool.name for tool in default_mcp.tools}
+
+    # Test include_operations with the known operation ID
+    include_ops_mcp = FastApiMCP(app, include_operations=["list_items"])
+    assert len(include_ops_mcp.tools) == 1
+    assert {tool.name for tool in include_ops_mcp.tools} == {"list_items"}
+
+    # Test include_operations with the auto-generated operation ID
+    include_auto_ops_mcp = FastApiMCP(app, include_operations=[auto_generated_op_id])
+    assert len(include_auto_ops_mcp.tools) == 1
+    assert {tool.name for tool in include_auto_ops_mcp.tools} == {auto_generated_op_id}
+
+    # Test include_tags with a tag that matches the endpoint
+    include_tags_mcp = FastApiMCP(app, include_tags=["items"])
+    assert len(include_tags_mcp.tools) == 1
+    assert {tool.name for tool in include_tags_mcp.tools} == {"list_items"}
+
+
+def test_filter_with_empty_tools():
+    """Test filtering with an empty tools list to ensure it handles this edge case correctly."""
+    # Create a FastAPI app without any routes
+    app = FastAPI()
+
+    # Create MCP server (should have no tools)
+    empty_mcp = FastApiMCP(app)
+    assert len(empty_mcp.tools) == 0
+
+    # Test filtering with various options on an empty app
+    include_ops_mcp = FastApiMCP(app, include_operations=["some_op"])
+    assert len(include_ops_mcp.tools) == 0
+
+    exclude_ops_mcp = FastApiMCP(app, exclude_operations=["some_op"])
+    assert len(exclude_ops_mcp.tools) == 0
+
+    include_tags_mcp = FastApiMCP(app, include_tags=["some_tag"])
+    assert len(include_tags_mcp.tools) == 0
+
+    exclude_tags_mcp = FastApiMCP(app, exclude_tags=["some_tag"])
+    assert len(exclude_tags_mcp.tools) == 0
+
+    # Test combined filtering
+    combined_mcp = FastApiMCP(app, include_operations=["op"], include_tags=["tag"])
+    assert len(combined_mcp.tools) == 0
+
+
+def test_filtering_with_empty_tags_array():
+    """Test filtering behavior with endpoints that have empty tags array."""
+    app = FastAPI()
+
+    # Define an endpoint with tags
+    @app.get("/items/", operation_id="list_items", tags=["items"])
+    async def list_items():
+        return [{"id": 1}]
+
+    # Define an endpoint with an empty tags array
+    @app.get("/empty-tags/", operation_id="empty_tags", tags=[])
+    async def empty_tags():
+        return {"result": "empty tags"}
+
+    # Test default behavior
+    default_mcp = FastApiMCP(app)
+    assert len(default_mcp.tools) == 2
+    assert {tool.name for tool in default_mcp.tools} == {"list_items", "empty_tags"}
+
+    # Test include_tags
+    include_tags_mcp = FastApiMCP(app, include_tags=["items"])
+    assert len(include_tags_mcp.tools) == 1
+    assert {tool.name for tool in include_tags_mcp.tools} == {"list_items"}
+
+    # Test exclude_tags
+    exclude_tags_mcp = FastApiMCP(app, exclude_tags=["items"])
+    assert len(exclude_tags_mcp.tools) == 1
+    assert {tool.name for tool in exclude_tags_mcp.tools} == {"empty_tags"}
