@@ -65,6 +65,28 @@ That's it! Your auto-generated MCP server is now available at `https://app.base.
 
 > **Note on `base_url`**: While `base_url` is optional, it is highly recommended to provide it explicitly. The `base_url` tells the MCP server where to send API requests when tools are called. Without it, the library will attempt to determine the URL automatically, which may not work correctly in deployed environments where the internal and external URLs differ.
 
+## Tool Naming
+
+FastAPI-MCP uses the `operation_id` from your FastAPI routes as the MCP tool names. When you don't specify an `operation_id`, FastAPI auto-generates one, but these can be cryptic.
+
+Compare these two endpoint definitions:
+
+```python
+# Auto-generated operation_id (something like "read_user_users__user_id__get")
+@app.get("/users/{user_id}")
+async def read_user(user_id: int):
+    return {"user_id": user_id}
+
+# Explicit operation_id (tool will be named "get_user_info")
+@app.get("/users/{user_id}", operation_id="get_user_info")
+async def read_user(user_id: int):
+    return {"user_id": user_id}
+```
+
+For clearer, more intuitive tool names, we recommend adding explicit `operation_id` parameters to your FastAPI route definitions.
+
+To find out more, read FastAPI's official docs about [advanced config of path operations.](https://fastapi.tiangolo.com/advanced/path-operation-advanced-configuration/)
+
 ## Advanced Usage
 
 FastAPI-MCP provides several ways to customize and control how your MCP server is created and configured. Here are some advanced usage patterns:
@@ -88,9 +110,11 @@ mcp = FastApiMCP(
 mcp.mount()
 ```
 
-### Mounting to a Separate FastAPI App
+### Deploying Separately from Original FastAPI App
 
-You can create an MCP server from one FastAPI app and mount it to a different app:
+You are not limited to serving the MCP on the same FastAPI app from which it was created.
+
+You can create an MCP server from one FastAPI app, and mount it to a different app:
 
 ```python
 from fastapi import FastAPI
