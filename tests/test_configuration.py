@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+import pytest
 
 from fastapi_mcp import FastApiMCP
 
@@ -374,3 +375,65 @@ def test_describe_all_responses_and_full_response_schema_config_complex_app(comp
             assert tool.description.count("**Output Schema:**") > 0, (
                 "The description should contain full output schemas"
             )
+
+
+def test_filtering_functionality():
+    """Test that FastApiMCP correctly filters endpoints based on operation IDs and tags."""
+    app = FastAPI()
+
+    # Define endpoints with different operation IDs and tags
+    @app.get("/items/", operation_id="list_items", tags=["items"])
+    async def list_items():
+        return [{"id": 1}]
+
+    @app.get("/items/{item_id}", operation_id="get_item", tags=["items", "read"])
+    async def get_item(item_id: int):
+        return {"id": item_id}
+
+    @app.post("/items/", operation_id="create_item", tags=["items", "write"])
+    async def create_item():
+        return {"id": 2}
+
+    @app.put("/items/{item_id}", operation_id="update_item", tags=["items", "write"])
+    async def update_item(item_id: int):
+        return {"id": item_id}
+
+    @app.delete("/items/{item_id}", operation_id="delete_item", tags=["items", "delete"])
+    async def delete_item(item_id: int):
+        return {"id": item_id}
+
+    @app.get("/search/", operation_id="search_items", tags=["search"])
+    async def search_items():
+        return [{"id": 1}]
+
+    # Test include_operations
+    include_ops_mcp = FastApiMCP(app, include_operations=["get_item", "list_items"])
+    assert len(include_ops_mcp.tools) == 2
+    assert {tool.name for tool in include_ops_mcp.tools} == {"get_item", "list_items"}
+
+    # Test exclude_operations
+    exclude_ops_mcp = FastApiMCP(app, exclude_operations=["delete_item", "search_items"])
+    assert len(exclude_ops_mcp.tools) == 4
+    assert {tool.name for tool in exclude_ops_mcp.tools} == {"get_item", "list_items", "create_item", "update_item"}
+
+    # Test include_tags
+    include_tags_mcp = FastApiMCP(app, include_tags=["read"])
+    assert len(include_tags_mcp.tools) == 1
+    assert {tool.name for tool in include_tags_mcp.tools} == {"get_item"}
+
+    # Test exclude_tags
+    exclude_tags_mcp = FastApiMCP(app, exclude_tags=["write", "delete"])
+    assert len(exclude_tags_mcp.tools) == 3
+    assert {tool.name for tool in exclude_tags_mcp.tools} == {"get_item", "list_items", "search_items"}
+
+    # Test combining include_operations and include_tags
+    combined_include_mcp = FastApiMCP(app, include_operations=["delete_item"], include_tags=["search"])
+    assert len(combined_include_mcp.tools) == 2
+    assert {tool.name for tool in combined_include_mcp.tools} == {"delete_item", "search_items"}
+
+    # Test invalid combinations
+    with pytest.raises(ValueError):
+        FastApiMCP(app, include_operations=["get_item"], exclude_operations=["delete_item"])
+
+    with pytest.raises(ValueError):
+        FastApiMCP(app, include_tags=["items"], exclude_tags=["write"])
